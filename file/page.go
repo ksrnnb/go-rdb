@@ -8,13 +8,13 @@ type Page struct {
 	bb *bytebuffer.ByteBuffer
 }
 
-func New(bs int) *Page {
+func NewPage(bs int) *Page {
 	bb := bytebuffer.New(bs)
 	return &Page{bb}
 }
 
-func NewBuf(buf []byte) *Page {
-	bb := bytebuffer.NewBuf(buf)
+func NewPageWithBuf(buf []byte) *Page {
+	bb := bytebuffer.NewWithBuf(buf)
 
 	return &Page{bb}
 }

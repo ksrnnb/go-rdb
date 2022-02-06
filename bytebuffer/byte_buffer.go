@@ -20,7 +20,7 @@ func New(bs int) *ByteBuffer {
 	return &ByteBuffer{make([]byte, bs), 0, nil}
 }
 
-func NewBuf(buf []byte) *ByteBuffer {
+func NewWithBuf(buf []byte) *ByteBuffer {
 	return &ByteBuffer{buf, 0, nil}
 }
 

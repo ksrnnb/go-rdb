@@ -8,7 +8,7 @@ import (
 
 func TestGetBytes(t *testing.T) {
 	hello := []byte{'h', 'e', 'l', 'l', 'o'}
-	page := New(1024)
+	page := NewPage(1024)
 
 	err := page.SetBytes(0, hello)
 
@@ -38,7 +38,7 @@ func TestGetBytes(t *testing.T) {
 }
 
 func TestGetInt(t *testing.T) {
-	page := New(1024)
+	page := NewPage(1024)
 
 	err := page.SetInt(0, 100)
 
@@ -58,7 +58,7 @@ func TestGetInt(t *testing.T) {
 }
 
 func TestGetString(t *testing.T) {
-	page := New(1024)
+	page := NewPage(1024)
 
 	err := page.SetString(0, "hello")
 
