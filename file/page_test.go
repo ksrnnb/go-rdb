@@ -8,14 +8,18 @@ import (
 
 func TestGetBytes(t *testing.T) {
 	hello := []byte{'h', 'e', 'l', 'l', 'o'}
-	page := NewWithBlockSize(len(hello))
+	page := NewWithBlockSize(1024)
 
-	page.SetBytes(0, hello)
+	err := page.SetBytes(0, hello)
+
+	if err != nil {
+		t.Fatalf("err = %v, want nil", err)
+	}
 
 	v, err := page.GetInt(0)
 
 	if err != nil {
-		t.Fatalf("page.GetInt(0) error, %v", err)
+		t.Fatalf("err = %v, want nil", err)
 	}
 
 	if v != 5 {
