@@ -15,11 +15,11 @@ type ByteBuffer struct {
 	err error
 }
 
-func NewWithBlockSize(bs int) *ByteBuffer {
+func New(bs int) *ByteBuffer {
 	return &ByteBuffer{make([]byte, bs), 0, nil}
 }
 
-func New(buf []byte) *ByteBuffer {
+func NewBuf(buf []byte) *ByteBuffer {
 	return &ByteBuffer{buf, 0, nil}
 }
 

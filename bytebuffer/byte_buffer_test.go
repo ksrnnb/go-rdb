@@ -5,7 +5,7 @@ import (
 )
 
 func TestSetPosition(t *testing.T) {
-	bb := NewWithBlockSize(5)
+	bb := New(5)
 
 	bb.Position(0)
 
@@ -21,7 +21,7 @@ func TestSetPosition(t *testing.T) {
 }
 
 func TestCannotSetPosition(t *testing.T) {
-	bb := NewWithBlockSize(5)
+	bb := New(5)
 	bb.Position(0)
 	bb.Position(5)
 
@@ -31,7 +31,7 @@ func TestCannotSetPosition(t *testing.T) {
 }
 
 func TestPut(t *testing.T) {
-	bb := NewWithBlockSize(1024)
+	bb := New(1024)
 	hello := []byte{'h', 'e', 'l', 'l', 'o'}
 	bb.Put(hello)
 
@@ -42,7 +42,7 @@ func TestPut(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	hello := []byte{'h', 'e', 'l', 'l', 'o'}
-	bb := NewWithBlockSize(1024)
+	bb := New(1024)
 	bb.Put(hello)
 
 	dst := make([]byte, len(hello))
@@ -51,5 +51,38 @@ func TestGet(t *testing.T) {
 
 	if string(dst) != "hello" {
 		t.Errorf(`bb.Get(dst) = '%s', want "hello"`, dst)
+	}
+}
+
+func TestPutInt(t *testing.T) {
+	bb := New(1024)
+
+	bb.PutInt(100)
+
+	if bb.Error() != nil {
+		t.Errorf(`bb.Error() = %v want nil`, bb.Error())
+	}
+
+	newBB := New(0)
+	newBB.PutInt(100)
+
+	if newBB.Error() == nil {
+		t.Errorf(`newBB.Error() should has error but is nil`)
+	}
+}
+
+func TestGetInt(t *testing.T) {
+	bb := New(1024)
+	bb.PutInt(100)
+	bb.Position(0)
+
+	val, err := bb.GetInt()
+
+	if err != nil {
+		t.Errorf(`err = %v want nil`, err)
+	}
+
+	if val != 100 {
+		t.Errorf(`val = %d want 100`, val)
 	}
 }

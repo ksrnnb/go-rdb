@@ -8,13 +8,13 @@ type Page struct {
 	bb *bytebuffer.ByteBuffer
 }
 
-func NewWithBlockSize(bs int) *Page {
-	bb := bytebuffer.NewWithBlockSize(bs)
+func New(bs int) *Page {
+	bb := bytebuffer.New(bs)
 	return &Page{bb}
 }
 
-func New(buf []byte) *Page {
-	bb := bytebuffer.New(buf)
+func NewBuf(buf []byte) *Page {
+	bb := bytebuffer.NewBuf(buf)
 
 	return &Page{bb}
 }
@@ -42,6 +42,13 @@ func (p *Page) SetBytes(pos int, b []byte) error {
 
 func (p *Page) GetInt(pos int) (int, error) {
 	return p.bb.GetIntWithPosition(pos)
+}
+
+func (p *Page) SetInt(pos, val int) error {
+	p.bb.Position(pos)
+	p.bb.PutInt(val)
+
+	return p.bb.Error()
 }
 
 func (p *Page) Size() int {
