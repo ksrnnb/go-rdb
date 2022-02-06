@@ -56,3 +56,23 @@ func TestGetInt(t *testing.T) {
 		t.Errorf(`val = '%d', want 100`, val)
 	}
 }
+
+func TestGetString(t *testing.T) {
+	page := New(1024)
+
+	err := page.SetString(0, "hello")
+
+	if err != nil {
+		t.Fatalf("err = %v, want nil", err)
+	}
+
+	str, err := page.GetString(0)
+
+	if err != nil {
+		t.Fatalf("err = %v, want nil", err)
+	}
+
+	if str != "hello" {
+		t.Errorf(`str = '%s', want "hello"`, str)
+	}
+}

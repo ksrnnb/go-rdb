@@ -40,6 +40,23 @@ func (p *Page) SetBytes(pos int, b []byte) error {
 	return p.bb.Error()
 }
 
+func (p *Page) GetString(pos int) (string, error) {
+	b, err := p.GetBytes(pos)
+
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
+}
+
+func (p *Page) SetString(pos int, s string) error {
+	b := []byte(s)
+	err := p.SetBytes(pos, b)
+
+	return err
+}
+
 func (p *Page) GetInt(pos int) (int, error) {
 	return p.bb.GetIntWithPosition(pos)
 }
@@ -49,8 +66,4 @@ func (p *Page) SetInt(pos, val int) error {
 	p.bb.PutInt(val)
 
 	return p.bb.Error()
-}
-
-func (p *Page) Size() int {
-	return p.bb.Size()
 }
