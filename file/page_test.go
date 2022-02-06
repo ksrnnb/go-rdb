@@ -76,3 +76,16 @@ func TestGetString(t *testing.T) {
 		t.Errorf(`str = '%s', want "hello"`, str)
 	}
 }
+
+func TestMaxLength(t *testing.T) {
+	len := MaxLength(5)
+
+	// UTF-8 => 4 bytes
+	maxBytesPerChar := 4
+	int64Size := 64
+	expected := 5*maxBytesPerChar + int64Size
+
+	if len != expected {
+		t.Errorf(`len = '%d', want %d`, len, expected)
+	}
+}

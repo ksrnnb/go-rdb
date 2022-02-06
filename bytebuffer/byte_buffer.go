@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"unicode/utf8"
 )
 
 // 整数を入れるときはint64
@@ -113,16 +114,6 @@ func (bb *ByteBuffer) Put(b []byte) {
 	bb.pos += len(b)
 }
 
-// binaryのPutUVarintを参照
-func intSize(x int64) int {
-	i := 0
-	for x >= 0x80 {
-		x >>= 7
-		i++
-	}
-	return i + 1
-}
-
 func (bb *ByteBuffer) Error() error {
 	return bb.err
 }
@@ -137,4 +128,24 @@ func (bb *ByteBuffer) sizeNeedsToStoreInt() int {
 
 func (bb *ByteBuffer) sizeNeedsToStoreBytes(b []byte) int {
 	return bb.pos + Int64Size + len(b)
+}
+
+// binaryのPutUVarintを参照
+func intSize(x int64) int {
+	i := 0
+	for x >= 0x80 {
+		x >>= 7
+		i++
+	}
+	return i + 1
+}
+
+// 与えられた文字長の文字列がとりうる最大の容量を返す
+func MaxLength(strlen int) int {
+	return Int64Size + strlen*maxBytesPerChar()
+}
+
+// UTF-8を想定
+func maxBytesPerChar() int {
+	return utf8.UTFMax
 }

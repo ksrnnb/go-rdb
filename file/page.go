@@ -67,3 +67,7 @@ func (p *Page) SetInt(pos, val int) error {
 
 	return p.bb.Error()
 }
+
+func MaxLength(strlen int) int {
+	return bytebuffer.MaxLength(strlen)
+}
