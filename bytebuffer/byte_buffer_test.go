@@ -86,3 +86,21 @@ func TestGetInt(t *testing.T) {
 		t.Errorf(`val = %d want 100`, val)
 	}
 }
+
+func TestJapanese(t *testing.T) {
+	bb := New(1024)
+	hello := []byte("こんにちわ")
+	bb.Put(hello)
+	bb.Position(0)
+
+	dst := make([]byte, len(hello))
+	err := bb.Get(dst)
+
+	if err != nil {
+		t.Errorf(`err = %v want nil`, err)
+	}
+
+	if string(dst) != "こんにちわ" {
+		t.Errorf(`bb.Get(dst) = '%s', want "こんにちわ"`, dst)
+	}
+}
