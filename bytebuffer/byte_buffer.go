@@ -3,49 +3,67 @@ package bytebuffer
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
+	"fmt"
 )
 
-var ErrTooLarge = errors.New("bytebuffer: too large")
-
-const maxInt = int(^uint(0) >> 1)
-
-// smallBufferSize is an initial allocation minimal capacity.
-const smallBufferSize = 64
+// 整数を入れるときはint64
+const Int64Size = 64
 
 type ByteBuffer struct {
 	buf []byte // contents are the bytes buf[off : len(buf)]
 	pos int    // read at &buf[off], write at &buf[len(buf)]
+	err error
 }
 
 func NewWithBlockSize(bs int) *ByteBuffer {
-	return &ByteBuffer{make([]byte, bs), 0}
+	return &ByteBuffer{make([]byte, bs), 0, nil}
 }
 
 func New(buf []byte) *ByteBuffer {
-	return &ByteBuffer{buf, 0}
+	return &ByteBuffer{buf, 0, nil}
 }
 
 // Position sets bb.pos
 func (bb *ByteBuffer) Position(pos int) {
-	bb.pos = pos
+	if pos >= bb.Size() {
+		bb.err = fmt.Errorf("bytebuffer: Position() cannot set position %d", pos)
+	} else {
+		bb.pos = pos
+	}
 }
 
 // Get copies bb.buf to buf and advance position the length of buf
-func (bb *ByteBuffer) Get(buf []byte) {
+func (bb *ByteBuffer) Get(buf []byte) error {
+	if bb.err != nil {
+		return bb.err
+	}
+
 	len := len(buf)
 	tail := bb.pos + len
-	copy(buf[0:], bb.buf[bb.pos:tail])
 
+	if bb.sizeNeedsToStoreBytes(buf) >= bb.Size() {
+		return fmt.Errorf("bytebuffer: Get() cannot get []byte")
+	}
+
+	copy(buf[0:], bb.buf[bb.pos:tail])
 	bb.pos += len
+	return nil
 }
 
 // GetInt gets integer in current posotion
 func (bb *ByteBuffer) GetInt() (int, error) {
+	if bb.err != nil {
+		return 0, bb.err
+	}
+
 	b := bytes.NewBuffer(bb.buf[bb.pos:])
 	byteLen, err := binary.ReadVarint(b)
 
-	s := bb.intSize(byteLen)
+	if err != nil {
+		return 0, nil
+	}
+
+	s := intSize(byteLen)
 	bb.pos += s
 
 	return int(byteLen), err
@@ -53,18 +71,27 @@ func (bb *ByteBuffer) GetInt() (int, error) {
 
 // GetIntWithPosition get integers at the specified position (pos)
 func (bb *ByteBuffer) GetIntWithPosition(pos int) (int, error) {
+	if pos+Int64Size > bb.Size() {
+		return 0, fmt.Errorf("bytebuffer: GetIntWithPositoin() cannot get with position %d", pos)
+	}
+
 	bb.pos = pos
 	b := bytes.NewBuffer(bb.buf[bb.pos:])
 	bytelen, err := binary.ReadVarint(b)
 
+	bb.pos += intSize(bytelen)
 	return int(bytelen), err
 }
 
 // PutInt set integer in current position and advance position the size of val
 func (bb *ByteBuffer) PutInt(val int) {
-	ok := bb.tryGrowByReslice(val)
-	if !ok {
-		bb.grow(val)
+	if bb.err != nil {
+		return
+	}
+
+	if bb.sizeNeedsToStoreInt() >= bb.Size() {
+		bb.err = fmt.Errorf("bytebuffer: PutInt() cannot put '%d'", val)
+		return
 	}
 
 	size := binary.PutVarint(bb.buf, int64(val))
@@ -73,17 +100,21 @@ func (bb *ByteBuffer) PutInt(val int) {
 
 // Put set []byte in current position and advance position the size of []byte
 func (bb *ByteBuffer) Put(b []byte) {
-	ok := bb.tryGrowByReslice(len(b))
-	if !ok {
-		bb.grow(len(b))
+	if bb.err != nil {
+		return
 	}
-	copy(bb.buf[bb.pos:], b)
 
+	if bb.sizeNeedsToStoreBytes(b) >= bb.Size() {
+		bb.err = fmt.Errorf("bytebuffer: Put() cannot put []byte '%s'", b)
+		return
+	}
+
+	copy(bb.buf[bb.pos:], b)
 	bb.pos += len(b)
 }
 
 // binaryのPutUVarintを参照
-func (bb *ByteBuffer) intSize(x int64) int {
+func intSize(x int64) int {
 	i := 0
 	for x >= 0x80 {
 		x >>= 7
@@ -92,71 +123,18 @@ func (bb *ByteBuffer) intSize(x int64) int {
 	return i + 1
 }
 
-// ここから下はbytes.Bufferを参照
-// Reset resets the buffer to be empty,
-// but it retains the underlying storage for use by future writes.
-// Reset is the same as Truncate(0).
-func (bb *ByteBuffer) Reset() {
-	bb.buf = bb.buf[:0]
-	bb.pos = 0
+func (bb *ByteBuffer) Error() error {
+	return bb.err
 }
 
-// tryGrowByReslice is a inlineable version of grow for the fast-case where the
-// internal buffer only needs to be resliced.
-// It returns the index where bytes should be written and whether it succeeded.
-func (bb *ByteBuffer) tryGrowByReslice(n int) bool {
-	if l := len(bb.buf); n <= cap(bb.buf)-l {
-		bb.buf = bb.buf[:l+n]
-		return true
-	}
-	return false
+func (bb *ByteBuffer) Size() int {
+	return len(bb.buf)
 }
 
-// grow grows the buffer to guarantee space for n more bytes.
-// It returns the index where bytes should be written.
-// If the buffer can't grow it will panic with ErrTooLarge.
-func (bb *ByteBuffer) grow(n int) {
-	m := len(bb.buf)
-	// If buffer is empty, reset to recover space.
-	if m == 0 && bb.pos != 0 {
-		bb.Reset()
-	}
-	// Try to grow by means of a reslice.
-	if ok := bb.tryGrowByReslice(n); ok {
-		return
-	}
-	if bb.buf == nil && n <= smallBufferSize {
-		bb.buf = make([]byte, n, smallBufferSize)
-		return
-	}
-	c := cap(bb.buf)
-	if n <= c/2-m {
-		// We can slide things down instead of allocating a new
-		// slice. We only need m+n <= c to slide, but
-		// we instead let capacity get twice as large so we
-		// don't spend all our time copying.
-		copy(bb.buf, bb.buf[bb.pos:])
-	} else if c > maxInt-c-n {
-		panic(ErrTooLarge)
-	} else {
-		// Not enough space anywhere, we need to allocate.
-		buf := makeSlice(2*c + n)
-		copy(buf, bb.buf[bb.pos:])
-		bb.buf = buf
-	}
-	// Restore b.pos and len(b.buf).
-	bb.pos = 0
-	bb.buf = bb.buf[:m+n]
+func (bb *ByteBuffer) sizeNeedsToStoreInt() int {
+	return bb.pos + Int64Size
 }
 
-// makeSlice allocates a slice of size n. If the allocation fails, it panics
-// with ErrTooLarge.
-func makeSlice(n int) []byte {
-	// If the make fails, give a known error.
-	defer func() {
-		if recover() != nil {
-			panic(ErrTooLarge)
-		}
-	}()
-	return make([]byte, n)
+func (bb *ByteBuffer) sizeNeedsToStoreBytes(b []byte) int {
+	return bb.pos + Int64Size + len(b)
 }

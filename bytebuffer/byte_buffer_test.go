@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func TestPosition(t *testing.T) {
-	bb := NewWithBlockSize(0)
+func TestSetPosition(t *testing.T) {
+	bb := NewWithBlockSize(5)
 
 	bb.Position(0)
 
@@ -13,30 +13,36 @@ func TestPosition(t *testing.T) {
 		t.Errorf("bb.pos = %d want 0", bb.pos)
 	}
 
+	bb.Position(4)
+
+	if bb.pos != 4 {
+		t.Errorf("bb.pos = %d want 5", bb.pos)
+	}
+}
+
+func TestCannotSetPosition(t *testing.T) {
+	bb := NewWithBlockSize(5)
+	bb.Position(0)
 	bb.Position(5)
 
-	if bb.pos != 5 {
+	if bb.pos != 0 {
 		t.Errorf("bb.pos = %d want 0", bb.pos)
 	}
 }
 
 func TestPut(t *testing.T) {
-	bb := NewWithBlockSize(0)
+	bb := NewWithBlockSize(1024)
 	hello := []byte{'h', 'e', 'l', 'l', 'o'}
 	bb.Put(hello)
 
-	if string(bb.buf) != "hello" {
-		t.Errorf(`bb.buf = %s want "hello"`, bb.buf)
-	}
-
-	if bb.pos != len(hello) {
-		t.Errorf(`bb.pos = %d want "%d"`, bb.pos, len(hello))
+	if bb.Error() != nil {
+		t.Errorf(`bb.Error() = %v want nil`, bb.Error())
 	}
 }
 
 func TestGet(t *testing.T) {
 	hello := []byte{'h', 'e', 'l', 'l', 'o'}
-	bb := NewWithBlockSize(len(hello))
+	bb := NewWithBlockSize(1024)
 	bb.Put(hello)
 
 	dst := make([]byte, len(hello))
