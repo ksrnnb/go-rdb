@@ -10,43 +10,45 @@ func TestGetBytes(t *testing.T) {
 	hello := []byte{'h', 'e', 'l', 'l', 'o'}
 	page := NewPage(1024)
 
-	err := page.SetBytes(0, hello)
+	pos := 50
+	err := page.SetBytes(pos, hello)
 
 	if err != nil {
 		t.Fatalf("err = %v, want nil", err)
 	}
 
-	v, err := page.GetInt(0)
+	v, err := page.GetInt(pos)
 
 	if err != nil {
 		t.Fatalf("err = %v, want nil", err)
 	}
 
 	if v != 5 {
-		t.Errorf("page.GetInt(0) = '%d' want 5", v)
+		t.Errorf("page.GetInt(%d) = '%d' want 5", pos, v)
 	}
 
-	bv, err := page.GetBytes(0)
+	bv, err := page.GetBytes(pos)
 
 	if err != nil {
-		t.Fatalf("page.GetBytes(0) error, %v", err)
+		t.Fatalf("page.GetBytes(%d) error, %v", pos, err)
 	}
 
 	if string(bv) != "hello" {
-		t.Errorf("page.GetBytes(0) = '%s' want 'hello'", bv)
+		t.Errorf("page.GetBytes(%d) = '%s' want 'hello'", pos, bv)
 	}
 }
 
 func TestGetInt(t *testing.T) {
 	page := NewPage(1024)
 
-	err := page.SetInt(0, 100)
+	pos := 50
+	err := page.SetInt(pos, 100)
 
 	if err != nil {
 		t.Fatalf("err = %v, want nil", err)
 	}
 
-	val, err := page.GetInt(0)
+	val, err := page.GetInt(pos)
 
 	if err != nil {
 		t.Fatalf("err = %v, want nil", err)
@@ -60,13 +62,14 @@ func TestGetInt(t *testing.T) {
 func TestGetString(t *testing.T) {
 	page := NewPage(1024)
 
-	err := page.SetString(0, "hello")
+	pos := 50
+	err := page.SetString(pos, "hello")
 
 	if err != nil {
 		t.Fatalf("err = %v, want nil", err)
 	}
 
-	str, err := page.GetString(0)
+	str, err := page.GetString(pos)
 
 	if err != nil {
 		t.Fatalf("err = %v, want nil", err)

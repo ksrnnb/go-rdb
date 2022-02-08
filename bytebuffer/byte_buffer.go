@@ -95,8 +95,11 @@ func (bb *ByteBuffer) PutInt(val int) {
 		return
 	}
 
-	size := binary.PutVarint(bb.buf, int64(val))
-	bb.pos += size
+	b := make([]byte, Int64Size)
+	n := binary.PutVarint(b, int64(val))
+
+	copy(bb.buf[bb.pos:], b[:n])
+	bb.pos += n
 }
 
 // Put set []byte in current position and advance position the size of []byte
@@ -112,6 +115,21 @@ func (bb *ByteBuffer) Put(b []byte) {
 
 	copy(bb.buf[bb.pos:], b)
 	bb.pos += len(b)
+}
+
+func (bb *ByteBuffer) ReadBuf() []byte {
+	return bb.buf
+}
+
+func (bb *ByteBuffer) WriteBuf(b []byte) error {
+	if len(b) > len(bb.buf) {
+		return fmt.Errorf("bytebuffer: WriteBuf(b) failed, %s", b)
+	}
+
+	head := bb.pos
+	tail := bb.pos + len(b)
+	copy(bb.buf[head:tail], b)
+	return nil
 }
 
 func (bb *ByteBuffer) Error() error {

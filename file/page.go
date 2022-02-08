@@ -68,6 +68,19 @@ func (p *Page) SetInt(pos, val int) error {
 	return p.bb.Error()
 }
 
+func (p *Page) ReadBuf() []byte {
+	return p.bb.ReadBuf()
+}
+
+func (p *Page) WriteBuf(b []byte) error {
+	return p.bb.WriteBuf(b)
+}
+
+func (p *Page) Contents() *bytebuffer.ByteBuffer {
+	p.bb.Position(0)
+	return p.bb
+}
+
 func MaxLength(strlen int) int {
 	return bytebuffer.MaxLength(strlen)
 }
