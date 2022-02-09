@@ -95,3 +95,8 @@ func (p *Page) Contents() *bytebuffer.ByteBuffer {
 func MaxLength(strlen int) int {
 	return bytebuffer.MaxLength(strlen)
 }
+
+// 文字列から文字長のバイト数を返す
+func GetByteLength(str []byte) int {
+	return bytebuffer.GetByteLength(str)
+}

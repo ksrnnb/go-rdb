@@ -128,7 +128,11 @@ func (bb *ByteBuffer) WriteBuf(b []byte) error {
 
 	head := bb.pos
 	tail := bb.pos + len(b)
-	copy(bb.buf[head:tail], b)
+
+	if tail > head {
+		copy(bb.buf[head:tail], b)
+	}
+
 	return nil
 }
 
@@ -161,6 +165,12 @@ func intSize(x int64) int {
 // 与えられた文字長の文字列がとりうる最大の容量を返す
 func MaxLength(strlen int) int {
 	return Int64Size + strlen*maxBytesPerChar()
+}
+
+// 文字列から文字長のバイト数を返す
+func GetByteLength(str []byte) int {
+	l := len(str)
+	return intSize(int64(l))
 }
 
 // UTF-8を想定
