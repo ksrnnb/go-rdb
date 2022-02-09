@@ -6,6 +6,7 @@ import (
 	"github.com/ksrnnb/go-rdb/file"
 )
 
+// LogIteratorはブロックNo.の大きいものから小さいものに向かってiterateする
 type LogIterator struct {
 	fm         *file.FileManager
 	blk        *file.BlockID
@@ -33,6 +34,9 @@ func NewLogIterator(fm *file.FileManager, blk *file.BlockID) (*LogIterator, erro
 	return li, nil
 }
 
+// 指定したブロック領域をイテレータのページに読み込む
+// ブロック領域の先頭に入っている値をboundary（最後にログが書き込まれた場所）
+// currentPosの値をboundaryにすることで、最後にログが書き込まれた場所を指定する
 func (li *LogIterator) moveToBlock(blk *file.BlockID) error {
 	err := li.fm.Read(blk, li.p)
 
@@ -55,7 +59,8 @@ func (li *LogIterator) HasNext() bool {
 	return li.currentPos < li.fm.BlockSize() || li.blk.Number() > 0
 }
 
-// ブロックNo.の大きいものから小さいものに向かってiterateする
+// Next()はページの位置が、イテレータのcurrentPosの場合の文字列を取得する
+// currentPosがブロックサイズの場合は、次のブロックに移動してから文字列を取得する
 func (li *LogIterator) Next() ([]byte, error) {
 	if li.currentPos == li.fm.BlockSize() {
 		blk := file.NewBlockID(li.blk.FileName(), li.blk.Number()-1)
@@ -68,7 +73,8 @@ func (li *LogIterator) Next() ([]byte, error) {
 		return []byte{}, err
 	}
 
-	// TODO: ここは怪しい。int64Sizeではなく、実際に格納されている大きさでは？
-	li.currentPos += int64Size + len(rec)
+	intSize := file.GetByteLength(rec)
+
+	li.currentPos += intSize + len(rec)
 	return rec, nil
 }
