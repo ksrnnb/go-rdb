@@ -29,6 +29,7 @@ func NewFileManager(dbDirectory string, bs int) (*FileManager, error) {
 		openFiles:   map[string]*os.File{},
 	}
 
+	// tempから始まるファイルは削除
 	err := filepath.Walk(dbDirectory, func(path string, fi fs.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("file: NewFileManager failed, %v", err)
@@ -75,6 +76,7 @@ func (fm *FileManager) Read(blk *BlockID, p *Page) error {
 	return err
 }
 
+// 指定したブロック位置にページの内容を全て書き込む
 func (fm *FileManager) Write(blk *BlockID, p *Page) error {
 	f, err := fm.getFile(blk.FileName())
 
@@ -88,24 +90,32 @@ func (fm *FileManager) Write(blk *BlockID, p *Page) error {
 	return err
 }
 
-func (fm *FileManager) Append(filename string) error {
-	// TODO: これであっているか？
-	newBlkNum := len(filename)
+// Append()は新しく空のブロックを作成して、指定したファイルに割り当てる。
+func (fm *FileManager) Append(filename string) (*BlockID, error) {
+	newBlkNum, err := fm.Length(filename)
+	if err != nil {
+		return nil, err
+	}
+
 	blk := NewBlockID(filename, newBlkNum)
 
 	f, err := fm.getFile(filename)
-
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	f.Seek(int64(blk.Number()*fm.blockSize), 0)
 	b := make([]byte, fm.blockSize)
 	_, err = f.Write(b)
+	if err != nil {
+		return nil, err
+	}
 
-	return err
+	return blk, nil
 }
 
+// Length()は指定したファイルの長さ（=ブロックNo.）を取得する
+// 具体的には、指定したファイルのサイズをブロックサイズで割る。
 func (fm *FileManager) Length(filename string) (int, error) {
 	f, err := fm.getFile(filename)
 
@@ -122,10 +132,12 @@ func (fm *FileManager) Length(filename string) (int, error) {
 	return int(fs.Size()) / fm.blockSize, nil
 }
 
+// IsNew()は、DBのディレクトリを新規に作成したかどうかを返す
 func (fm *FileManager) IsNew() bool {
 	return fm.isNew
 }
 
+// BlockSize()はFileManagerがもつブロックサイズを返す
 func (fm *FileManager) BlockSize() int {
 	return fm.blockSize
 }
