@@ -1,7 +1,9 @@
 package file
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -53,27 +55,38 @@ func NewFileManager(dbDirectory string, bs int) (*FileManager, error) {
 	return fm, nil
 }
 
+// 指定したブロック領域をページに読み込む
 func (fm *FileManager) Read(blk *BlockID, p *Page) error {
 	f, err := fm.getFile(blk.FileName())
 
 	if err != nil {
-		return err
+		return fmt.Errorf("file: Read() failed to get file from BlockID, %w", err)
 	}
 
 	f.Seek(int64(blk.Number()*fm.blockSize), 0)
 	b := make([]byte, fm.blockSize)
-	n, err := f.Read(b)
+	n, ioErr := f.Read(b)
 
-	if err != nil {
-		return err
+	// Callers should always process the n > 0 bytes returned before
+	// considering the error err.
+	// Doing so correctly handles I/O errors that happen after
+	// reading some bytes and also both of the allowed EOF behaviors.
+	if n > 0 {
+		resizedBuf := make([]byte, n)
+		copy(resizedBuf, b[:n])
+
+		err = p.WriteBuf(resizedBuf)
+
+		if err != nil {
+			return fmt.Errorf("file: Read() failed to write buffer to page, %w", err)
+		}
 	}
 
-	resizedBuf := make([]byte, n)
-	copy(resizedBuf, b[:n])
+	if ioErr != nil && !errors.Is(ioErr, io.EOF) {
+		return fmt.Errorf("file: Read() failed to read file to buffer, %w", err)
+	}
 
-	err = p.WriteBuf(resizedBuf)
-
-	return err
+	return nil
 }
 
 // 指定したブロック位置にページの内容を全て書き込む
