@@ -8,7 +8,7 @@ import (
 	"github.com/ksrnnb/go-rdb/iterator"
 )
 
-const int64Size = bytebuffer.Int64Size
+const intByteSize = bytebuffer.IntByteSize
 
 type LogManager struct {
 	fm           *file.FileManager
@@ -19,17 +19,20 @@ type LogManager struct {
 	lastSavedLSN int
 }
 
-// NewLogManger()は1ブロックサイズ分のバイトバッファをもつページを1つ確保する
+// NewLogManager()は1ブロックサイズ分のバイトバッファをもつページを1つ確保する
 // 指定したログファイルの大きさが0の場合は、新しくブロックを割り当て
 // 0でない（既に書き込まれている）場合は、ログサイズ分のブロックを生成して、
 // 読み取った内容をページおに書き込む
-func NewLogManager(fm file.FileManager, logFileName string) (*LogManager, error) {
-	var lm *LogManager
+func NewLogManager(fm *file.FileManager, logFileName string) (*LogManager, error) {
+	lm := &LogManager{
+		fm:          fm,
+		logFileName: logFileName,
+	}
 
 	b := make([]byte, fm.BlockSize())
-	logPage := file.NewPageWithBuf(b)
+	lm.logPage = file.NewPageWithBuf(b)
 
-	logSize, err := fm.Length(logFileName)
+	logSize, err := fm.Length(lm.logFileName)
 
 	if err != nil {
 		return nil, fmt.Errorf("log: NewLogManager() cannot get log size, %w", err)
@@ -42,8 +45,8 @@ func NewLogManager(fm file.FileManager, logFileName string) (*LogManager, error)
 			return nil, fmt.Errorf("log: NewLogManager() cannot append new block, %w", err)
 		}
 	} else {
-		lm.currentBlk = file.NewBlockID(logFileName, logSize-1)
-		err = lm.fm.Read(lm.currentBlk, logPage)
+		lm.currentBlk = file.NewBlockID(lm.logFileName, logSize-1)
+		err = lm.fm.Read(lm.currentBlk, lm.logPage)
 
 		if err != nil {
 			return nil, fmt.Errorf("log: NewLogManager() cannot read file to logPage, %w", err)
@@ -56,7 +59,7 @@ func NewLogManager(fm file.FileManager, logFileName string) (*LogManager, error)
 // FlushWithLSN()は、指定したLSNと最後にディスクに書き込んだLSNを比較する
 // 指定したLSNのほうが小さい場合は、既にディスクに書き込まれている必要がある。
 // それ以外の場合は、ページをディスクに書き込む
-func (lm *LogManager) FlushWithLSN(lsn int) error {
+func (lm *LogManager) Flush(lsn int) error {
 	if lsn >= lm.lastSavedLSN {
 		return lm.flush()
 	}
@@ -74,8 +77,7 @@ func (lm *LogManager) flush() error {
 	}
 
 	lm.lastSavedLSN = lm.latestLSN
-
-	return err
+	return nil
 }
 
 // Append()は、
@@ -83,6 +85,7 @@ func (lm *LogManager) flush() error {
 // 収まらない場合は、現在のページをディスクに書き込み、appendNewBlock()を呼ぶ
 // 処理後、LSNを1インクリメントする（latestLSN）
 func (lm *LogManager) Append(logrec []byte) (latestLSN int, err error) {
+	// boundaryは前回書き込んだ最後の位置
 	boundary, err := lm.logPage.GetInt(0)
 
 	if err != nil {
@@ -90,10 +93,14 @@ func (lm *LogManager) Append(logrec []byte) (latestLSN int, err error) {
 	}
 
 	recSize := len(logrec)
-	// TODO: int64Sizeでいいのか？？
-	bytesNeeded := recSize + int64Size
+	// 文字列と文字列の長さ（int）の分の容量
+	bytesNeeded := recSize + intByteSize
 
-	if boundary-bytesNeeded < int64Size {
+	// fmt.Printf("lastSavedLSN: %d, latestLSN: %d, boundary: %d, logrec: %s, recSize: %d, bytesNeeded: %d\n\n",
+	// 	lm.lastSavedLSN, lm.latestLSN, boundary, logrec, recSize, bytesNeeded)
+
+	// 先頭に最後に書き込んだ位置(int)を記録するだけのバッファがあるかどうか
+	if boundary-bytesNeeded < intByteSize {
 		err = lm.flush()
 		if err != nil {
 			return 0, fmt.Errorf("log: Append() failed to flush, %w", err)
@@ -112,17 +119,21 @@ func (lm *LogManager) Append(logrec []byte) (latestLSN int, err error) {
 		}
 	}
 
+	// 最後に書き込んだ位置から文字列格納に必要なバイト数だけ前に移動
 	recPos := boundary - bytesNeeded
+
 	err = lm.logPage.SetBytes(recPos, logrec)
 	if err != nil {
 		return 0, fmt.Errorf("log: Append() failed to set bytes, %w", err)
 	}
 
+	// 最後に書き込んだレコードの位置をページの先頭に記録。毎回更新する
 	lm.logPage.SetInt(0, recPos)
 	if err != nil {
 		return 0, fmt.Errorf("log: Append() failed to set int, %w", err)
 	}
 
+	// 書き込みができたらlatestLSNを更新する
 	lm.latestLSN += 1
 	return lm.latestLSN, nil
 }

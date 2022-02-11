@@ -10,12 +10,7 @@ const dbDirectory = "./../data"
 
 func newLogIterator(t *testing.T) *LogIterator {
 	t.Helper()
-	bs := 400
-	fm, err := file.NewFileManager(dbDirectory, bs)
-
-	if err != nil {
-		t.Fatalf("failed to create file manager, %v", err)
-	}
+	fm := newFileManaer(t)
 
 	blk := file.NewBlockID("tempBlock", 0)
 	li, err := NewLogIterator(fm, blk)
@@ -25,6 +20,16 @@ func newLogIterator(t *testing.T) *LogIterator {
 	}
 
 	return li
+}
+
+func newFileManaer(t *testing.T) *file.FileManager {
+	t.Helper()
+	fm, err := file.NewFileManager(dbDirectory, 400)
+
+	if err != nil {
+		t.Fatalf("failed to create file manager, %v", err)
+	}
+	return fm
 }
 
 func TestIteratesLogIterator(t *testing.T) {
