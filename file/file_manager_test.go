@@ -54,7 +54,7 @@ func TestFile(t *testing.T) {
 		t.Errorf("TestNewFileManager: p1.SetString(pos1, str) failed, %v", err)
 	}
 
-	size := MaxLength(len(str))
+	size := MaxLength(str)
 	pos2 := pos1 + size
 	intVal := 345
 	p1.SetInt(pos2, intVal)

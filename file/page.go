@@ -91,9 +91,14 @@ func (p *Page) Contents() *bytebuffer.ByteBuffer {
 	return p.bb
 }
 
+// Position() returns current bytebuffer position
+func (p *Page) Position() int {
+	return p.bb.CurrentPosition()
+}
+
 // 文字列の長さから、バッファに格納するのに必要なサイズを返す
-func MaxLength(strlen int) int {
-	return bytebuffer.MaxLength(strlen)
+func MaxLength(str string) int {
+	return bytebuffer.MaxLength(str)
 }
 
 // 文字列から文字長のバイト数を返す
