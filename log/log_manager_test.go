@@ -22,8 +22,6 @@ func createRecords(t *testing.T, lm *LogManager, start, end int) {
 		p := file.NewPageWithBuf(buf)
 		err := p.SetString(0, s)
 
-		fmt.Printf("i: %d, buffer size %d, npos: %d, intByteSize %d\n", i, len(buf), npos, intByteSize)
-
 		if err != nil {
 			t.Fatalf("SetString failed, i = %d, err = %v", i, err)
 		}
@@ -47,7 +45,7 @@ func printLogRecords(t *testing.T, lm *LogManager) {
 		t.Fatalf("lm.Iterator() failed, %v", err)
 	}
 
-	fmt.Println("printing...")
+	fmt.Printf("\n======== printing... ========\n\n")
 
 	for li.HasNext() {
 		rec, err := li.Next()
@@ -69,7 +67,9 @@ func printLogRecords(t *testing.T, lm *LogManager) {
 			t.Fatalf("page.GetInt(npos) failed, %v", err)
 		}
 
-		fmt.Printf("[%s , %d]", str, val)
+		fmt.Printf("[%s , %d]\n", str, val)
+		fmt.Printf("li.currentPos: %d, blocksize: %d, blk.Number(): %d\n",
+			li.currentPos, li.fm.BlockSize(), li.blk.Number())
 	}
 }
 
@@ -95,7 +95,7 @@ func TestLogManager(t *testing.T) {
 		t.Errorf("lastSavedLSN should be 20, but given %d", lm.lastSavedLSN)
 	}
 
-	// printLogRecords(t, lm)
+	printLogRecords(t, lm)
 
 	createRecords(t, lm, 36, 70)
 	// 8 + 20 * 19 = 388でflush
@@ -105,6 +105,8 @@ func TestLogManager(t *testing.T) {
 	}
 
 	lm.Flush(65)
+
+	printLogRecords(t, lm)
 
 	// flushしたので、最後までディスクに書き込まれる。
 	if lm.lastSavedLSN != 70 {

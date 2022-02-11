@@ -80,8 +80,9 @@ func (p *Page) ReadBuf() []byte {
 	return p.bb.ReadBuf()
 }
 
-// 指定したバイト配列をページの現在位置に書き込む
+// 指定したバイト配列をページの先頭から書き込む
 func (p *Page) WriteBuf(b []byte) error {
+	p.bb.Position(0)
 	return p.bb.WriteBuf(b)
 }
 

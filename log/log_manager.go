@@ -5,7 +5,6 @@ import (
 
 	"github.com/ksrnnb/go-rdb/bytebuffer"
 	"github.com/ksrnnb/go-rdb/file"
-	"github.com/ksrnnb/go-rdb/iterator"
 )
 
 const intByteSize = bytebuffer.IntByteSize
@@ -164,7 +163,7 @@ func (lm *LogManager) appendNewBlock() (*file.BlockID, error) {
 }
 
 // ログのイテレータを返す
-func (lm *LogManager) Iterator() (iterator.ByteIterator, error) {
+func (lm *LogManager) Iterator() (*LogIterator, error) {
 	err := lm.flush()
 
 	if err != nil {
