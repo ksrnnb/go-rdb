@@ -110,10 +110,10 @@ func TestMaxByte(t *testing.T) {
 		str string
 		len int
 	}{
-		"alphabet":                 {"abcd", 12},
-		"number":                   {"123456", 14},
-		"japanese":                 {"あいうえお", 23},
-		"alphabet number japanese": {"abc123あいう", 23},
+		"alphabet":                 {"abcd", 8},
+		"number":                   {"123456", 10},
+		"japanese":                 {"あいうえお", 19},
+		"alphabet number japanese": {"abc123あいう", 19},
 	}
 
 	for name, tt := range cases {
