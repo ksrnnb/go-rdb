@@ -85,10 +85,10 @@ func TestMaxLength(t *testing.T) {
 		str      string
 		expected int
 	}{
-		"alphabet": {"abcd", 12},
-		"number":   {"123", 11},
-		"japanese": {"あいうえお", 23},
-		"mix":      {"abc123あいうえお", 29},
+		"alphabet": {"abcd", 8},
+		"number":   {"123", 7},
+		"japanese": {"あいうえお", 19},
+		"mix":      {"abc123あいうえお", 25},
 	}
 
 	for name, tt := range cases {

@@ -87,27 +87,27 @@ func newLogManager(t *testing.T) *LogManager {
 func TestLogManager(t *testing.T) {
 	lm := newLogManager(t)
 	createRecords(t, lm, 1, 35)
-	// record1  => [8byte(int) + page{[8byte(int) + 7byte(string)] + 8byte(int)}] => 31byte
-	// record10 => [8byte(int) + page{[8byte(int) + 8byte(string)] + 8byte(int)}] => 32byte
-	// 8 + 31 * 10 + 32 * 2 => 8 + 310 + 64 = 372 でflush
-	// 8 + 32 * 12 = 392でflush
+	// record1  => [4byte(uint32) + page{[4byte(uint32) + 7byte(string)] + 4byte(uint32)}] => 19byte
+	// record10 => [4byte(uint32) + page{[4byte(uint32) + 8byte(string)] + 4byte(uint32)}] => 20byte
+	// 8 + 19 * 9 + 20 * 11 => 8 + 171 + 220 = 399 でflush
 	// => 35まではflushが入らないのでlastSavedLSNは24
-	if lm.lastSavedLSN != 24 {
-		t.Errorf("lastSavedLSN should be 24, but given %d", lm.lastSavedLSN)
+	if lm.lastSavedLSN != 20 {
+		t.Errorf("lastSavedLSN should be 20, but given %d", lm.lastSavedLSN)
 	}
 
 	// printLogRecords(t, lm)
 
 	createRecords(t, lm, 36, 70)
-	// flushは12の倍数で発生する。最後にflushするのは60
-	if lm.lastSavedLSN != 60 {
-		t.Errorf("lastSavedLSN should be 60, but given %d", lm.lastSavedLSN)
+	// 8 + 20 * 19 = 388でflush
+	// flushは20 + 19 * nで発生する。最後にflushするのは58
+	if lm.lastSavedLSN != 58 {
+		t.Errorf("lastSavedLSN should be 58, but given %d", lm.lastSavedLSN)
 	}
 
 	lm.Flush(65)
 
 	// flushしたので、最後までディスクに書き込まれる。
 	if lm.lastSavedLSN != 70 {
-		t.Errorf("lastSavedLSN should be 60, but given %d", lm.lastSavedLSN)
+		t.Errorf("lastSavedLSN should be 70, but given %d", lm.lastSavedLSN)
 	}
 }

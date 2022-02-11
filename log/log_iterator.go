@@ -73,8 +73,6 @@ func (li *LogIterator) Next() ([]byte, error) {
 		return []byte{}, err
 	}
 
-	intSize := file.GetByteLength(rec)
-
-	li.currentPos += intSize + len(rec)
+	li.currentPos += intByteSize + len(rec)
 	return rec, nil
 }

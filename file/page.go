@@ -100,8 +100,3 @@ func (p *Page) Position() int {
 func MaxLength(str string) int {
 	return bytebuffer.MaxLength(str)
 }
-
-// 文字列から文字長のバイト数を返す
-func GetByteLength(str []byte) int {
-	return bytebuffer.GetByteLength(str)
-}
