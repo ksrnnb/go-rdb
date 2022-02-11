@@ -104,3 +104,23 @@ func TestJapanese(t *testing.T) {
 		t.Errorf(`bb.Get(dst) = '%s', want "こんにちわ"`, dst)
 	}
 }
+
+func TestMaxByte(t *testing.T) {
+	cases := map[string]struct {
+		str string
+		len int
+	}{
+		"alphabet":                 {"abcd", 12},
+		"number":                   {"123456", 14},
+		"japanese":                 {"あいうえお", 23},
+		"alphabet number japanese": {"abc123あいう", 23},
+	}
+
+	for name, tt := range cases {
+		t.Run(name, func(t *testing.T) {
+			if MaxLength(tt.str) != tt.len {
+				t.Errorf("'MaxLength(%s)' should be %d, but given %d", tt.str, tt.len, MaxLength(tt.str))
+			}
+		})
+	}
+}
