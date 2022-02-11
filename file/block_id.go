@@ -7,6 +7,8 @@ type BlockID struct {
 	blknum   int
 }
 
+// NewBlockIDはBlockIDを返す
+// ファイル名と、ファイルのブロックNo.をもつ
 func NewBlockID(filename string, blknum int) *BlockID {
 	return &BlockID{filename, blknum}
 }

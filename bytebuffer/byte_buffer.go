@@ -8,7 +8,7 @@ import (
 )
 
 // 整数を入れるときはint64
-const Int64Size = 64
+const IntByteSize = 8
 
 type ByteBuffer struct {
 	buf []byte // contents are the bytes buf[off : len(buf)]
@@ -33,6 +33,11 @@ func (bb *ByteBuffer) Position(pos int) {
 	}
 }
 
+// CurrentPosition() returns current position
+func (bb *ByteBuffer) CurrentPosition() int {
+	return bb.pos
+}
+
 // Get copies bb.buf to buf and advance position the length of buf
 func (bb *ByteBuffer) Get(buf []byte) error {
 	if bb.err != nil {
@@ -42,7 +47,7 @@ func (bb *ByteBuffer) Get(buf []byte) error {
 	len := len(buf)
 	tail := bb.pos + len
 
-	if bb.sizeNeedsToStoreBytes(buf) >= bb.Size() {
+	if !bb.canStoreBytes(buf) {
 		return fmt.Errorf("bytebuffer: Get() cannot get []byte")
 	}
 
@@ -72,7 +77,7 @@ func (bb *ByteBuffer) GetInt() (int, error) {
 
 // GetIntWithPosition get integers at the specified position (pos)
 func (bb *ByteBuffer) GetIntWithPosition(pos int) (int, error) {
-	if pos+Int64Size > bb.Size() {
+	if pos+IntByteSize > bb.Size() {
 		return 0, fmt.Errorf("bytebuffer: GetIntWithPositoin() cannot get with position %d", pos)
 	}
 
@@ -90,12 +95,12 @@ func (bb *ByteBuffer) PutInt(val int) {
 		return
 	}
 
-	if bb.sizeNeedsToStoreInt() >= bb.Size() {
+	if !bb.canStoreInt(val) {
 		bb.err = fmt.Errorf("bytebuffer: PutInt() cannot put '%d'", val)
 		return
 	}
 
-	b := make([]byte, Int64Size)
+	b := make([]byte, IntByteSize)
 	n := binary.PutVarint(b, int64(val))
 
 	copy(bb.buf[bb.pos:], b[:n])
@@ -108,7 +113,7 @@ func (bb *ByteBuffer) Put(b []byte) {
 		return
 	}
 
-	if bb.sizeNeedsToStoreBytes(b) >= bb.Size() {
+	if !bb.canStoreBytes(b) {
 		bb.err = fmt.Errorf("bytebuffer: Put() cannot put []byte '%s'", b)
 		return
 	}
@@ -128,7 +133,11 @@ func (bb *ByteBuffer) WriteBuf(b []byte) error {
 
 	head := bb.pos
 	tail := bb.pos + len(b)
-	copy(bb.buf[head:tail], b)
+
+	if tail > head {
+		copy(bb.buf[head:tail], b)
+	}
+
 	return nil
 }
 
@@ -140,12 +149,20 @@ func (bb *ByteBuffer) Size() int {
 	return len(bb.buf)
 }
 
-func (bb *ByteBuffer) sizeNeedsToStoreInt() int {
-	return bb.pos + Int64Size
+func (bb *ByteBuffer) canStoreInt(val int) bool {
+	return bb.Size() >= bb.sizeNeedsToStoreInt(val)
+}
+
+func (bb *ByteBuffer) canStoreBytes(buf []byte) bool {
+	return bb.Size() >= bb.sizeNeedsToStoreBytes(buf)
+}
+
+func (bb *ByteBuffer) sizeNeedsToStoreInt(val int) int {
+	return bb.pos + intSize(int64(val))
 }
 
 func (bb *ByteBuffer) sizeNeedsToStoreBytes(b []byte) int {
-	return bb.pos + Int64Size + len(b)
+	return bb.pos + len(b)
 }
 
 // binaryのPutUVarintを参照
@@ -159,8 +176,16 @@ func intSize(x int64) int {
 }
 
 // 与えられた文字長の文字列がとりうる最大の容量を返す
-func MaxLength(strlen int) int {
-	return Int64Size + strlen*maxBytesPerChar()
+func MaxLength(str string) int {
+	return IntByteSize + len(str)
+	// Goのlenは引数が何バイトか返してくれるので、len(str) * maxBytesPerChar()とするのは誤り
+	// return IntByteSize + strlen*maxBytesPerChar()
+}
+
+// 文字列から文字長のバイト数を返す
+func GetByteLength(str []byte) int {
+	l := len(str)
+	return intSize(int64(l))
 }
 
 // UTF-8を想定

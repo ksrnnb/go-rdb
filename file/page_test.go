@@ -81,14 +81,21 @@ func TestGetString(t *testing.T) {
 }
 
 func TestMaxLength(t *testing.T) {
-	len := MaxLength(5)
+	cases := map[string]struct {
+		str      string
+		expected int
+	}{
+		"alphabet": {"abcd", 12},
+		"number":   {"123", 11},
+		"japanese": {"あいうえお", 23},
+		"mix":      {"abc123あいうえお", 29},
+	}
 
-	// UTF-8 => 4 bytes
-	maxBytesPerChar := 4
-	int64Size := 64
-	expected := 5*maxBytesPerChar + int64Size
-
-	if len != expected {
-		t.Errorf(`len = '%d', want %d`, len, expected)
+	for name, tt := range cases {
+		t.Run(name, func(t *testing.T) {
+			if MaxLength(tt.str) != tt.expected {
+				t.Errorf("MaxLength(%s) should be %d, but given %d", tt.str, tt.expected, MaxLength(tt.str))
+			}
+		})
 	}
 }

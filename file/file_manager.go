@@ -1,7 +1,9 @@
 package file
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -29,6 +31,7 @@ func NewFileManager(dbDirectory string, bs int) (*FileManager, error) {
 		openFiles:   map[string]*os.File{},
 	}
 
+	// tempから始まるファイルは削除
 	err := filepath.Walk(dbDirectory, func(path string, fi fs.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("file: NewFileManager failed, %v", err)
@@ -52,29 +55,41 @@ func NewFileManager(dbDirectory string, bs int) (*FileManager, error) {
 	return fm, nil
 }
 
+// 指定したブロック領域をページに読み込む
 func (fm *FileManager) Read(blk *BlockID, p *Page) error {
 	f, err := fm.getFile(blk.FileName())
 
 	if err != nil {
-		return err
+		return fmt.Errorf("file: Read() failed to get file from BlockID, %w", err)
 	}
 
 	f.Seek(int64(blk.Number()*fm.blockSize), 0)
 	b := make([]byte, fm.blockSize)
-	n, err := f.Read(b)
+	n, ioErr := f.Read(b)
 
-	if err != nil {
-		return err
+	// Callers should always process the n > 0 bytes returned before
+	// considering the error err.
+	// Doing so correctly handles I/O errors that happen after
+	// reading some bytes and also both of the allowed EOF behaviors.
+	if n > 0 {
+		resizedBuf := make([]byte, n)
+		copy(resizedBuf, b[:n])
+
+		err = p.WriteBuf(resizedBuf)
+
+		if err != nil {
+			return fmt.Errorf("file: Read() failed to write buffer to page, %w", err)
+		}
 	}
 
-	resizedBuf := make([]byte, n)
-	copy(resizedBuf, b[:n])
+	if ioErr != nil && !errors.Is(ioErr, io.EOF) {
+		return fmt.Errorf("file: Read() failed to read file to buffer, %w", err)
+	}
 
-	err = p.WriteBuf(resizedBuf)
-
-	return err
+	return nil
 }
 
+// 指定したブロック位置にページの内容を全て書き込む
 func (fm *FileManager) Write(blk *BlockID, p *Page) error {
 	f, err := fm.getFile(blk.FileName())
 
@@ -88,24 +103,32 @@ func (fm *FileManager) Write(blk *BlockID, p *Page) error {
 	return err
 }
 
-func (fm *FileManager) Append(filename string) error {
-	// TODO: これであっているか？
-	newBlkNum := len(filename)
+// Append()は新しく空のブロックを作成して、指定したファイルに割り当てる。
+func (fm *FileManager) Append(filename string) (*BlockID, error) {
+	newBlkNum, err := fm.Length(filename)
+	if err != nil {
+		return nil, err
+	}
+
 	blk := NewBlockID(filename, newBlkNum)
 
 	f, err := fm.getFile(filename)
-
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	f.Seek(int64(blk.Number()*fm.blockSize), 0)
 	b := make([]byte, fm.blockSize)
 	_, err = f.Write(b)
+	if err != nil {
+		return nil, err
+	}
 
-	return err
+	return blk, nil
 }
 
+// Length()は指定したファイルの長さ（=ブロックNo.）を取得する
+// 具体的には、指定したファイルのサイズをブロックサイズで割る。
 func (fm *FileManager) Length(filename string) (int, error) {
 	f, err := fm.getFile(filename)
 
@@ -122,10 +145,12 @@ func (fm *FileManager) Length(filename string) (int, error) {
 	return int(fs.Size()) / fm.blockSize, nil
 }
 
+// IsNew()は、DBのディレクトリを新規に作成したかどうかを返す
 func (fm *FileManager) IsNew() bool {
 	return fm.isNew
 }
 
+// BlockSize()はFileManagerがもつブロックサイズを返す
 func (fm *FileManager) BlockSize() int {
 	return fm.blockSize
 }
