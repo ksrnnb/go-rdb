@@ -63,8 +63,12 @@ func (li *LogIterator) HasNext() bool {
 // currentPosがブロックサイズの場合は、次のブロックに移動してから文字列を取得する
 func (li *LogIterator) Next() ([]byte, error) {
 	if li.currentPos == li.fm.BlockSize() {
-		blk := file.NewBlockID(li.blk.FileName(), li.blk.Number()-1)
-		li.moveToBlock(blk)
+		// 同じファイルの1つ前のブロックを作って、読み込む
+		li.blk = file.NewBlockID(li.blk.FileName(), li.blk.Number()-1)
+		err := li.moveToBlock(li.blk)
+		if err != nil {
+			return []byte{}, err
+		}
 	}
 
 	rec, err := li.p.GetBytes(li.currentPos)
