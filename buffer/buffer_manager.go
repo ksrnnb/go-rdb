@@ -1,6 +1,7 @@
 package buffer
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -39,30 +40,30 @@ func (bm *BufferManager) FlushAll(txnum int) {
 	}
 }
 
-func (bm *BufferManager) Unpin(b *Buffer) {
+func (bm *BufferManager) Unpin(ctx context.Context, b *Buffer) {
 	b.unpin()
 
 	if !b.IsPinned() {
 		bm.numAvailable++
 
-		// TODO: javaのnotifyAll()を参照して実装
-		// notifyAll()
+		// TODO: unpinされたことを通知する
 	}
 }
 
-func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
+func (bm *BufferManager) Pin(ctx context.Context, blk *file.BlockID) (*Buffer, error) {
 	t := time.Now()
 	b := bm.tryToPin(blk)
 
 	for b == nil && !bm.isWaitingTooLong(t) {
-		// TODO: javaのwait()
-		// wait(maxTimeMilliSecond)
+		// TODO: 他のスレッドでUnpinされるのを待つ
+		// 暫定で1秒ごとにtryする
+		time.Sleep(1 * time.Second)
 		b = bm.tryToPin(blk)
 	}
 
 	if b == nil {
-		// TODO: fix error message
-		return nil, fmt.Errorf("buffer error")
+		// maxTImeMilliSecondを超えてもpinできない場合はエラーを返す
+		return nil, fmt.Errorf("buffer: Pin() failed, time over")
 	}
 
 	return b, nil
