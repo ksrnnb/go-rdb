@@ -107,7 +107,7 @@ func (bm *BufferManager) isWaitingTooLong(start time.Time) bool {
 // tryToPin()はbufferPoolからブロックを探す
 // ブロックがunpin状態だったらpin状態にしてBufferを返す
 // ブロックがない場合は、unpin状態のBufferを探す
-// unpinのBufferがあれば、引数のブロックをBufferに割り当てる
+// unpinのBufferがあれば、引数のブロックをBufferに割り当てる（ディスク書き込み）
 // Bufferがない場合はnilを返す（=> pinできなかった）
 func (bm *BufferManager) tryToPin(blk *file.BlockID) (*Buffer, error) {
 	b := bm.findExistingBuffer(blk)
