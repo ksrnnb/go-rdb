@@ -55,7 +55,7 @@ func NewLogManager(fm *file.FileManager, logFileName string) (*LogManager, error
 	return lm, nil
 }
 
-// FlushWithLSN()は、指定したLSNと最後にディスクに書き込んだLSNを比較する
+// Flush()は、指定したLSNと最後にディスクに書き込んだLSNを比較する
 // 指定したLSNのほうが小さい場合は、既にディスクに書き込まれている必要がある。
 // それ以外の場合は、ページをディスクに書き込む
 func (lm *LogManager) Flush(lsn int) error {

@@ -36,10 +36,12 @@ func NewBufferManager(fm *file.FileManager, lm *logs.LogManager, numbuffs int) *
 }
 
 // TODO: sync
+// unpin状態のバッファ数を返す
 func (bm *BufferManager) Available() int {
 	return bm.numAvailable
 }
 
+// トランザクションNo.が一致するバッファを全てディスクに書き込む
 func (bm *BufferManager) FlushAll(txnum int) error {
 	for _, b := range bm.bufferPool {
 		if b.ModifyingTx() == txnum {
