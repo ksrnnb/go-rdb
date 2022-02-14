@@ -162,12 +162,13 @@ func (fm *FileManager) getFile(filename string) (*os.File, error) {
 		return f, nil
 	}
 
-	newFile, err := os.Create(filepath.Join(fm.dbDirectory, filename))
+	fp := filepath.Join(fm.dbDirectory, filename)
+	f, err := os.OpenFile(fp, os.O_RDWR|os.O_CREATE, 0600)
 
 	if err != nil {
 		return nil, err
 	}
 
-	fm.openFiles[filename] = newFile
-	return newFile, nil
+	fm.openFiles[filename] = f
+	return f, nil
 }
