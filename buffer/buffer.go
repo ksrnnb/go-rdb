@@ -17,6 +17,7 @@ type Buffer struct {
 	lsn      int
 }
 
+// 1個のバッファは1ページ分もつ
 func NewBuffer(fm *file.FileManager, lm *logs.LogManager) *Buffer {
 	return &Buffer{
 		fm:       fm,
@@ -27,14 +28,20 @@ func NewBuffer(fm *file.FileManager, lm *logs.LogManager) *Buffer {
 	}
 }
 
+// Contents() returns associated page.
+// If the client modifies the page, it is also responsible for
+// generating an appropriatge log record and
+// calling the buffer's setModified() method.
 func (b *Buffer) Contents() *file.Page {
 	return b.contents
 }
 
+// バッファがもつブロックを返す
 func (b *Buffer) Block() *file.BlockID {
 	return b.blk
 }
 
+// トランザクションNo.とLSNを設定
 func (b *Buffer) SetModified(txnum, lsn int) {
 	b.txnum = txnum
 
@@ -49,10 +56,13 @@ func (b *Buffer) IsPinned() bool {
 	return b.pins > 0
 }
 
+// トランザクションNo.を返す
 func (b *Buffer) ModifyingTx() int {
 	return b.txnum
 }
 
+// 指定したブロックの内容をBufferのpageに割り当てる
+// 割り当て前に、バッファの内容はflush()してディスクに書き込まれる
 func (b *Buffer) assignToBlock(blk *file.BlockID) error {
 	err := b.flush()
 
@@ -70,6 +80,10 @@ func (b *Buffer) assignToBlock(blk *file.BlockID) error {
 	return nil
 }
 
+// トランザクションの値が0以上（SetModifiy()を実行）であれば
+// ログマネージャのFlushを実行し、ログファイルに書き込む
+// ファイルのブロックにページの内容を書き込む
+// トランザクションNo.は-1に戻す
 func (b *Buffer) flush() error {
 	if b.txnum >= 0 {
 		err := b.lm.Flush(b.lsn)

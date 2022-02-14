@@ -36,10 +36,12 @@ func NewBufferManager(fm *file.FileManager, lm *logs.LogManager, numbuffs int) *
 }
 
 // TODO: sync
+// unpin状態のバッファ数を返す
 func (bm *BufferManager) Available() int {
 	return bm.numAvailable
 }
 
+// トランザクションNo.が一致するバッファを全てディスクに書き込む
 func (bm *BufferManager) FlushAll(txnum int) error {
 	for _, b := range bm.bufferPool {
 		if b.ModifyingTx() == txnum {
@@ -67,6 +69,7 @@ func (bm *BufferManager) Unpin(b *Buffer) {
 // Pin()は引数のブロックをpinする
 // 空きがない場合は1秒ごとに再確認（最大10秒）
 // pinできたらBufferを返す
+// ディスクに書き込む可能性のあるメソッドはPin()またはFlushAll()のみ
 func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
 	t := time.Now()
 	b, err := bm.tryToPin(blk)
@@ -104,7 +107,7 @@ func (bm *BufferManager) isWaitingTooLong(start time.Time) bool {
 // tryToPin()はbufferPoolからブロックを探す
 // ブロックがunpin状態だったらpin状態にしてBufferを返す
 // ブロックがない場合は、unpin状態のBufferを探す
-// unpinのBufferがあれば、引数のブロックをBufferに割り当てる
+// unpinのBufferがあれば、引数のブロックをBufferに割り当てる（ディスク書き込み）
 // Bufferがない場合はnilを返す（=> pinできなかった）
 func (bm *BufferManager) tryToPin(blk *file.BlockID) (*Buffer, error) {
 	b := bm.findExistingBuffer(blk)
