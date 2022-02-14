@@ -1,6 +1,8 @@
 package buffer
 
 import (
+	"fmt"
+
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/logs"
 )
@@ -17,10 +19,11 @@ type Buffer struct {
 
 func NewBuffer(fm *file.FileManager, lm *logs.LogManager) *Buffer {
 	return &Buffer{
-		fm:    fm,
-		lm:    lm,
-		txnum: -1,
-		lsn:   -1,
+		fm:       fm,
+		lm:       lm,
+		txnum:    -1,
+		lsn:      -1,
+		contents: file.NewPage(fm.BlockSize()),
 	}
 }
 
@@ -40,6 +43,8 @@ func (b *Buffer) SetModified(txnum, lsn int) {
 	}
 }
 
+// IsPinned()はpin状態かどうかを返す
+// b.pinsの初期値は0
 func (b *Buffer) IsPinned() bool {
 	return b.pins > 0
 }
@@ -48,25 +53,48 @@ func (b *Buffer) ModifyingTx() int {
 	return b.txnum
 }
 
-func (b *Buffer) AssignToBlock(blk *file.BlockID) {
-	b.flush()
+func (b *Buffer) assignToBlock(blk *file.BlockID) error {
+	err := b.flush()
+
+	if err != nil {
+		return fmt.Errorf("buffer: assignToBlock() failed, %w", err)
+	}
+
+	err = b.fm.Read(blk, b.contents)
+	if err != nil {
+		return fmt.Errorf("buffer: assignToBlock() failed, %w", err)
+	}
+
 	b.blk = blk
-	b.fm.Read(blk, b.contents)
 	b.pins = 0
+	return nil
 }
 
-func (b *Buffer) flush() {
+func (b *Buffer) flush() error {
 	if b.txnum >= 0 {
-		b.lm.Flush(b.lsn)
-		b.fm.Write(b.blk, b.contents)
+		err := b.lm.Flush(b.lsn)
+
+		if err != nil {
+			return fmt.Errorf("buffer: flush() failed, %w", err)
+		}
+
+		err = b.fm.Write(b.blk, b.contents)
+		if err != nil {
+			return fmt.Errorf("buffer: flush() failed, %w", err)
+		}
+
 		b.txnum = -1
 	}
+
+	return nil
 }
 
+// pinしている数をインクリメントする
 func (b *Buffer) pin() {
 	b.pins++
 }
 
+// pinしている数をデクリメントする
 func (b *Buffer) unpin() {
 	b.pins--
 }

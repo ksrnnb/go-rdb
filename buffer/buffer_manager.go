@@ -1,7 +1,7 @@
 package buffer
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,13 +12,21 @@ import (
 // 10 * 1000 msec => 10 sec
 const maxTimeMilliSecond = 10000
 
+var errNotExistUnpin = errors.New("unpin buffer doesn't exist")
+
 type BufferManager struct {
 	bufferPool   []*Buffer
 	numAvailable int
 }
 
+// NewBufferManager()はBufferManagerを返す
+// bufferPoolはnumbuffs個のBufferが初期値となるため、全てunpin状態
 func NewBufferManager(fm *file.FileManager, lm *logs.LogManager, numbuffs int) *BufferManager {
-	bm := &BufferManager{numAvailable: numbuffs}
+	bp := make([]*Buffer, numbuffs)
+	bm := &BufferManager{
+		bufferPool:   bp,
+		numAvailable: numbuffs,
+	}
 
 	for i := 0; i < numbuffs; i++ {
 		bm.bufferPool[i] = NewBuffer(fm, lm)
@@ -32,15 +40,21 @@ func (bm *BufferManager) Available() int {
 	return bm.numAvailable
 }
 
-func (bm *BufferManager) FlushAll(txnum int) {
+func (bm *BufferManager) FlushAll(txnum int) error {
 	for _, b := range bm.bufferPool {
 		if b.ModifyingTx() == txnum {
-			b.flush()
+			err := b.flush()
+			if err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
-func (bm *BufferManager) Unpin(ctx context.Context, b *Buffer) {
+// Unpin()は引数のBufferをunpinする
+func (bm *BufferManager) Unpin(b *Buffer) {
 	b.unpin()
 
 	if !b.IsPinned() {
@@ -50,15 +64,26 @@ func (bm *BufferManager) Unpin(ctx context.Context, b *Buffer) {
 	}
 }
 
-func (bm *BufferManager) Pin(ctx context.Context, blk *file.BlockID) (*Buffer, error) {
+// Pin()は引数のブロックをpinする
+// 空きがない場合は1秒ごとに再確認（最大10秒）
+// pinできたらBufferを返す
+func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
 	t := time.Now()
-	b := bm.tryToPin(blk)
+	b, err := bm.tryToPin(blk)
+
+	if err != nil && errors.Is(err, errNotExistUnpin) {
+		return nil, fmt.Errorf("buffer(): Pin() failed, %w", err)
+	}
 
 	for b == nil && !bm.isWaitingTooLong(t) {
 		// TODO: 他のスレッドでUnpinされるのを待つ
 		// 暫定で1秒ごとにtryする
 		time.Sleep(1 * time.Second)
-		b = bm.tryToPin(blk)
+		b, err = bm.tryToPin(blk)
+		if err != nil && errors.Is(err, errNotExistUnpin) {
+			return nil, fmt.Errorf("buffer(): Pin() failed, %w", err)
+		}
+
 	}
 
 	if b == nil {
@@ -69,23 +94,32 @@ func (bm *BufferManager) Pin(ctx context.Context, blk *file.BlockID) (*Buffer, e
 	return b, nil
 }
 
+// isWaitingTooLong()はmaxTimeを超えてwaitしているかどうかを返す
 func (bm *BufferManager) isWaitingTooLong(start time.Time) bool {
 	limit := start.Add(maxTimeMilliSecond * time.Millisecond)
 
 	return time.Now().After(limit)
 }
 
-func (bm *BufferManager) tryToPin(blk *file.BlockID) *Buffer {
+// tryToPin()はbufferPoolからブロックを探す
+// ブロックがunpin状態だったらpin状態にしてBufferを返す
+// ブロックがない場合は、unpin状態のBufferを探す
+// unpinのBufferがあれば、引数のブロックをBufferに割り当てる
+// Bufferがない場合はnilを返す（=> pinできなかった）
+func (bm *BufferManager) tryToPin(blk *file.BlockID) (*Buffer, error) {
 	b := bm.findExistingBuffer(blk)
 
 	if b == nil {
 		b = bm.chooseUnpinnedBuffer()
 
 		if b == nil {
-			return nil
+			return nil, errNotExistUnpin
 		}
 
-		b.AssignToBlock(blk)
+		err := b.assignToBlock(blk)
+		if err != nil {
+			return nil, fmt.Errorf("buffer(): tryToPin() failed, %w", err)
+		}
 	}
 
 	if !b.IsPinned() {
@@ -93,9 +127,10 @@ func (bm *BufferManager) tryToPin(blk *file.BlockID) *Buffer {
 	}
 
 	b.pin()
-	return b
+	return b, nil
 }
 
+// findExistingBuffer()は引数と同じブロックをbufferPoolの中から探す
 func (bm *BufferManager) findExistingBuffer(blk *file.BlockID) *Buffer {
 	for _, b := range bm.bufferPool {
 		block := b.Block()
@@ -107,6 +142,8 @@ func (bm *BufferManager) findExistingBuffer(blk *file.BlockID) *Buffer {
 	return nil
 }
 
+// chooseUnpinnedBuffer()はbufferPoolのうち、
+// unpin状態のものを探して一番初めに見つかったものを返す
 func (bm *BufferManager) chooseUnpinnedBuffer() *Buffer {
 	for _, b := range bm.bufferPool {
 		if !b.IsPinned() {
