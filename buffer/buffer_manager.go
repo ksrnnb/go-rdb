@@ -69,6 +69,7 @@ func (bm *BufferManager) Unpin(b *Buffer) {
 // Pin()は引数のブロックをpinする
 // 空きがない場合は1秒ごとに再確認（最大10秒）
 // pinできたらBufferを返す
+// ディスクに書き込む可能性のあるメソッドはPin()またはFlushAll()のみ
 func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
 	t := time.Now()
 	b, err := bm.tryToPin(blk)

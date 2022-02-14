@@ -33,6 +33,7 @@ func TestBuffer(t *testing.T) {
 	_, err = bm.Pin(blockID(t, filename, 4))
 	expectNoError(t, err)
 
+	// こっちはflushされないのでディスクには書き込まれない
 	bm.Unpin(buff2)
 	buff2, err = bm.Pin(blockID(t, filename, 1))
 	expectNoError(t, err)
