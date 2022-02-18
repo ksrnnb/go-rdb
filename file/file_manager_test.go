@@ -43,25 +43,17 @@ func TestFile(t *testing.T) {
 		t.Errorf("TestNewFileManager: file manager cannot be created, %v", err)
 	}
 
-	blk := NewBlockID("testfile", 2)
+	blk := NewBlockID("tempTestFile", 2)
 	p1 := NewPage(fm.BlockSize())
 
 	pos1 := 88
 	str := "abcdefghijklm"
-	err = p1.SetString(pos1, str)
-
-	if err != nil {
-		t.Errorf("TestNewFileManager: p1.SetString(pos1, str) failed, %v", err)
-	}
+	p1.SetString(pos1, str)
 
 	size := MaxLength(str)
 	pos2 := pos1 + size
 	intVal := 345
 	p1.SetInt(pos2, intVal)
-
-	if err != nil {
-		t.Errorf("TestNewFileManager: p1.SetInt(pos2, intVal) failed, %v", err)
-	}
 
 	err = fm.Write(blk, p1)
 
@@ -77,20 +69,12 @@ func TestFile(t *testing.T) {
 		t.Errorf("TestNewFileManager: fm.Read(blk, p2) failed, %v", err)
 	}
 
-	pos1Val, err := p2.GetString(pos1)
-	if err != nil {
-		t.Errorf("TestNewFileManager: p1.GetString(pos1) failed, %v", err)
-	}
-
+	pos1Val := p2.GetString(pos1)
 	if pos1Val != str {
 		t.Errorf("TestNewFileManager: pos1Val = %s, want %s", pos1Val, str)
 	}
 
-	pos2Val, err := p2.GetInt(pos2)
-	if err != nil {
-		t.Errorf("TestNewFileManager: p2.GetInt(pos2) failed, %v", err)
-	}
-
+	pos2Val := p2.GetInt(pos2)
 	if pos2Val != intVal {
 		t.Errorf("TestNewFileManager: pos2Val = %d, want %d", pos2Val, intVal)
 	}

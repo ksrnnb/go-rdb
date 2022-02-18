@@ -9,7 +9,7 @@ import (
 	"github.com/ksrnnb/go-rdb/server"
 )
 
-const filename = "testfile"
+const filename = "tempTestFile"
 
 func newBufferManager(t *testing.T) *BufferManager {
 	t.Helper()

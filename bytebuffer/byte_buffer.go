@@ -37,47 +37,48 @@ func (bb *ByteBuffer) CurrentPosition() int {
 }
 
 // Get copies bb.buf to buf and advance position the length of buf
-func (bb *ByteBuffer) Get(buf []byte) error {
+func (bb *ByteBuffer) Get(buf []byte) {
 	if bb.err != nil {
-		return bb.err
+		return
 	}
 
 	len := len(buf)
 	tail := bb.pos + len
 
 	if !bb.canStoreBytes(buf) {
-		return fmt.Errorf("bytebuffer: Get() cannot get []byte")
+		bb.err = fmt.Errorf("bytebuffer: Get() cannot get []byte")
+		return
 	}
 
 	copy(buf[0:], bb.buf[bb.pos:tail])
 	bb.pos += len
-	return nil
 }
 
 // GetInt gets integer in current posotion
-func (bb *ByteBuffer) GetInt() (int, error) {
+func (bb *ByteBuffer) GetInt() int {
 	if bb.err != nil {
-		return 0, bb.err
+		return 0
 	}
 
 	byteLen := readInt(bb.buf[bb.pos:])
 
 	bb.pos += IntByteSize
 
-	return int(byteLen), nil
+	return int(byteLen)
 }
 
 // GetIntWithPosition get integers at the specified position (pos)
-func (bb *ByteBuffer) GetIntWithPosition(pos int) (int, error) {
+func (bb *ByteBuffer) GetIntWithPosition(pos int) int {
 	if pos+IntByteSize > bb.Size() {
-		return 0, fmt.Errorf("bytebuffer: GetIntWithPositoin() cannot get with position %d", pos)
+		bb.err = fmt.Errorf("bytebuffer: GetIntWithPositoin() cannot get with position %d", pos)
+		return 0
 	}
 
 	bb.pos = pos
 	bytelen := readInt(bb.buf[bb.pos:])
 
 	bb.pos += IntByteSize
-	return int(bytelen), nil
+	return int(bytelen)
 }
 
 // PutInt set integer in current position and advance position the size of val
@@ -132,7 +133,7 @@ func (bb *ByteBuffer) WriteBuf(b []byte) error {
 	return nil
 }
 
-func (bb *ByteBuffer) Error() error {
+func (bb *ByteBuffer) Err() error {
 	return bb.err
 }
 

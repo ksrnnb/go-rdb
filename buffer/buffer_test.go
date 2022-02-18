@@ -13,10 +13,10 @@ func TestBuffer(t *testing.T) {
 
 	p := buff1.Contents()
 
-	n, err := p.GetInt(80)
+	n := p.GetInt(80)
 	expectNoError(t, err)
 
-	err = p.SetInt(80, n+1)
+	p.SetInt(80, n+1)
 	expectNoError(t, err)
 	buff1.SetModified(1, 0)
 
@@ -39,7 +39,7 @@ func TestBuffer(t *testing.T) {
 	expectNoError(t, err)
 
 	p2 := buff2.Contents()
-	err = p2.SetInt(80, 9999)
+	p2.SetInt(80, 9999)
 	expectNoError(t, err)
 
 	buff2.SetModified(1, 0)

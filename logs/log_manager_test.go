@@ -20,18 +20,13 @@ func createRecords(t *testing.T, lm *LogManager, start, end int) {
 		buf := make([]byte, npos+intByteSize)
 
 		p := file.NewPageWithBuf(buf)
-		err := p.SetString(0, s)
-
-		if err != nil {
-			t.Fatalf("SetString failed, i = %d, err = %v", i, err)
-		}
-
-		err = p.SetInt(npos, 100+i)
-		if err != nil {
+		p.SetString(0, s)
+		p.SetInt(npos, 100+i)
+		if err := p.Err(); err != nil {
 			t.Fatalf("SetInt failed, i = %d, err = %v", i, err)
 		}
 
-		_, err = lm.Append(buf)
+		_, err := lm.Append(buf)
 		if err != nil {
 			t.Fatalf("Append failed, i = %d, err = %v", i, err)
 		}
@@ -54,16 +49,11 @@ func printLogRecords(t *testing.T, lm *LogManager) {
 		}
 
 		page := file.NewPageWithBuf(rec)
-		str, err := page.GetString(0)
-
-		if err != nil {
-			t.Fatalf("page.GetString(0) failed, %v", err)
-		}
-
+		str := page.GetString(0)
 		npos := file.MaxLength(str)
-		val, err := page.GetInt(npos)
+		val := page.GetInt(npos)
 
-		if err != nil {
+		if err := page.Err(); err != nil {
 			t.Fatalf("page.GetInt(npos) failed, %v", err)
 		}
 
@@ -75,7 +65,7 @@ func printLogRecords(t *testing.T, lm *LogManager) {
 
 func newLogManager(t *testing.T) *LogManager {
 	fm := newFileManaer(t)
-	lm, err := NewLogManager(fm, "logtest")
+	lm, err := NewLogManager(fm, "tempLogTest")
 
 	if err != nil {
 		t.Fatalf("newLogManager() failed")

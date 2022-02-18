@@ -44,9 +44,9 @@ func (li *LogIterator) moveToBlock(blk *file.BlockID) error {
 		return fmt.Errorf("log: moveToBlock() failed to read file to page, %w", err)
 	}
 
-	li.boundary, err = li.p.GetInt(0)
+	li.boundary = li.p.GetInt(0)
 
-	if err != nil {
+	if err := li.p.Err(); err != nil {
 		return fmt.Errorf("log: moveToBlock() failed to get integer from page, %w", err)
 	}
 
@@ -71,9 +71,9 @@ func (li *LogIterator) Next() ([]byte, error) {
 		}
 	}
 
-	rec, err := li.p.GetBytes(li.currentPos)
+	rec := li.p.GetBytes(li.currentPos)
 
-	if err != nil {
+	if err := li.p.Err(); err != nil {
 		return []byte{}, err
 	}
 
