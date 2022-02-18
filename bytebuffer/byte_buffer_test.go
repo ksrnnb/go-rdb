@@ -35,8 +35,8 @@ func TestPut(t *testing.T) {
 	hello := []byte{'h', 'e', 'l', 'l', 'o'}
 	bb.Put(hello)
 
-	if bb.Error() != nil {
-		t.Errorf(`bb.Error() = %v want nil`, bb.Error())
+	if bb.Err() != nil {
+		t.Errorf(`bb.Err() = %v want nil`, bb.Err())
 	}
 }
 
@@ -59,15 +59,15 @@ func TestPutInt(t *testing.T) {
 
 	bb.PutInt(100)
 
-	if bb.Error() != nil {
-		t.Errorf(`bb.Error() = %v want nil`, bb.Error())
+	if bb.Err() != nil {
+		t.Errorf(`bb.Err() = %v want nil`, bb.Err())
 	}
 
 	newBB := New(0)
 	newBB.PutInt(100)
 
-	if newBB.Error() == nil {
-		t.Errorf(`newBB.Error() should has error but is nil`)
+	if newBB.Err() == nil {
+		t.Errorf(`newBB.Err() should has error but is nil`)
 	}
 }
 
@@ -76,11 +76,7 @@ func TestGetInt(t *testing.T) {
 	bb.PutInt(100)
 	bb.Position(0)
 
-	val, err := bb.GetInt()
-
-	if err != nil {
-		t.Errorf(`err = %v want nil`, err)
-	}
+	val := bb.GetInt()
 
 	if val != 100 {
 		t.Errorf(`val = %d want 100`, val)
@@ -94,11 +90,7 @@ func TestJapanese(t *testing.T) {
 	bb.Position(0)
 
 	dst := make([]byte, len(hello))
-	err := bb.Get(dst)
-
-	if err != nil {
-		t.Errorf(`err = %v want nil`, err)
-	}
+	bb.Get(dst)
 
 	if string(dst) != "こんにちわ" {
 		t.Errorf(`bb.Get(dst) = '%s', want "こんにちわ"`, dst)

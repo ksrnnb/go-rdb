@@ -85,9 +85,9 @@ func (lm *LogManager) flush() error {
 // 処理後、LSNを1インクリメントする（latestLSN）
 func (lm *LogManager) Append(logrec []byte) (latestLSN int, err error) {
 	// boundaryは前回書き込んだ最後の位置
-	boundary, err := lm.logPage.GetInt(0)
+	boundary := lm.logPage.GetInt(0)
 
-	if err != nil {
+	if err := lm.logPage.Err(); err != nil {
 		return 0, fmt.Errorf("log: Append() failed to get integer, %w", err)
 	}
 
@@ -112,23 +112,16 @@ func (lm *LogManager) Append(logrec []byte) (latestLSN int, err error) {
 
 		// appendNewBlock()を実行した後は、ページは新しい空のページとなる。
 		// 先頭にブロックサイズが格納されている。
-		boundary, err = lm.logPage.GetInt(0)
-		if err != nil {
-			return 0, fmt.Errorf("log: Append() failed to get integer, %w", err)
-		}
+		boundary = lm.logPage.GetInt(0)
 	}
 
 	// 最後に書き込んだ位置から文字列格納に必要なバイト数だけ前に移動
 	recPos := boundary - bytesNeeded
-
-	err = lm.logPage.SetBytes(recPos, logrec)
-	if err != nil {
-		return 0, fmt.Errorf("log: Append() failed to set bytes, %w", err)
-	}
+	lm.logPage.SetBytes(recPos, logrec)
 
 	// 最後に書き込んだレコードの位置をページの先頭に記録。毎回更新する
 	lm.logPage.SetInt(0, recPos)
-	if err != nil {
+	if err := lm.logPage.Err(); err != nil {
 		return 0, fmt.Errorf("log: Append() failed to set int, %w", err)
 	}
 
@@ -147,9 +140,9 @@ func (lm *LogManager) appendNewBlock() (*file.BlockID, error) {
 		return nil, fmt.Errorf("log: appendNewBlock() cannot append new block, %w", err)
 	}
 
-	err = lm.logPage.SetInt(0, lm.fm.BlockSize())
+	lm.logPage.SetInt(0, lm.fm.BlockSize())
 
-	if err != nil {
+	if err := lm.logPage.Err(); err != nil {
 		return nil, fmt.Errorf("log: appendNewBlock() cannot set integer to lm.logPage, %w", err)
 	}
 

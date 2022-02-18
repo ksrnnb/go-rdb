@@ -75,9 +75,9 @@ func (fm *FileManager) Read(blk *BlockID, p *Page) error {
 		resizedBuf := make([]byte, n)
 		copy(resizedBuf, b[:n])
 
-		err = p.WriteBuf(resizedBuf)
+		p.WriteBuf(resizedBuf)
 
-		if err != nil {
+		if err := p.Err(); err != nil {
 			return fmt.Errorf("file: Read() failed to write buffer to page, %w", err)
 		}
 	}

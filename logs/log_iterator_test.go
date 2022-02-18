@@ -12,7 +12,7 @@ func newLogIterator(t *testing.T) *LogIterator {
 	t.Helper()
 	fm := newFileManaer(t)
 
-	blk := file.NewBlockID("tempBlock", 0)
+	blk := file.NewBlockID("tempLogBlock", 0)
 	li, err := NewLogIterator(fm, blk)
 
 	if err != nil {
