@@ -62,10 +62,9 @@ func (lt *LockTable) XLock(blk *file.BlockID) error {
 	return nil
 }
 
+// > 1 means XLock() assumes that the transaction already has an slock
 func (lt *LockTable) hasOtherSLocks(blk *file.BlockID) bool {
-	// TODO: 要確認
-	// 書籍では > 1
-	return lt.getLockVal(blk) >= 1
+	return lt.getLockVal(blk) > 1
 }
 
 func (lt *LockTable) Unlock(blk *file.BlockID) {
