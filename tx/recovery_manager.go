@@ -87,6 +87,7 @@ func (rm *RecoveryManager) Recover() error {
 	return rm.lm.Flush(lsn)
 }
 
+// TODO: newValは使わないのか？
 func (rm *RecoveryManager) SetInt(buf *buffer.Buffer, offset, newVal int) (latestLSN int, err error) {
 	p := buf.Contents()
 
@@ -100,7 +101,7 @@ func (rm *RecoveryManager) SetInt(buf *buffer.Buffer, offset, newVal int) (lates
 	return writeSetIntToLog(rm.lm, rm.txnum, blk, offset, oldVal)
 }
 
-func (rm *RecoveryManager) SetString(buf *buffer.Buffer, offset, newVal int) (latestLSN int, err error) {
+func (rm *RecoveryManager) SetString(buf *buffer.Buffer, offset int, newVal string) (latestLSN int, err error) {
 	p := buf.Contents()
 
 	oldVal := p.GetString(offset)
