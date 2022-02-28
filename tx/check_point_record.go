@@ -1,9 +1,8 @@
-package recovery
+package tx
 
 import (
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/logs"
-	"github.com/ksrnnb/go-rdb/tx"
 )
 
 type CheckPointRecord struct{}
@@ -25,7 +24,7 @@ func (cpr *CheckPointRecord) TxNumber() int {
 
 // Undo() undoes the operation encoded by this log record
 // do nothing in checkpoint
-func (cpr *CheckPointRecord) Undo(tx *tx.Transaction) {}
+func (cpr *CheckPointRecord) Undo(tx *Transaction) {}
 
 func (cpr *CheckPointRecord) String() string {
 	return "<CHECKPOINT>"

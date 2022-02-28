@@ -1,19 +1,18 @@
-package recovery
+package tx
 
 import (
 	"github.com/ksrnnb/go-rdb/buffer"
 	"github.com/ksrnnb/go-rdb/logs"
-	"github.com/ksrnnb/go-rdb/tx"
 )
 
 type RecoveryManager struct {
 	lm    *logs.LogManager
 	bm    *buffer.BufferManager
-	tx    *tx.Transaction
+	tx    *Transaction
 	txnum int
 }
 
-func NewRecoveryManager(tx *tx.Transaction, txnum int, lm *logs.LogManager, bm *buffer.BufferManager) (*RecoveryManager, error) {
+func NewRecoveryManager(tx *Transaction, txnum int, lm *logs.LogManager, bm *buffer.BufferManager) (*RecoveryManager, error) {
 	rm := &RecoveryManager{
 		lm:    lm,
 		bm:    bm,
@@ -88,6 +87,7 @@ func (rm *RecoveryManager) Recover() error {
 	return rm.lm.Flush(lsn)
 }
 
+// TODO: newValは使わないのか？
 func (rm *RecoveryManager) SetInt(buf *buffer.Buffer, offset, newVal int) (latestLSN int, err error) {
 	p := buf.Contents()
 
@@ -101,7 +101,7 @@ func (rm *RecoveryManager) SetInt(buf *buffer.Buffer, offset, newVal int) (lates
 	return writeSetIntToLog(rm.lm, rm.txnum, blk, offset, oldVal)
 }
 
-func (rm *RecoveryManager) SetString(buf *buffer.Buffer, offset, newVal int) (latestLSN int, err error) {
+func (rm *RecoveryManager) SetString(buf *buffer.Buffer, offset int, newVal string) (latestLSN int, err error) {
 	p := buf.Contents()
 
 	oldVal := p.GetString(offset)

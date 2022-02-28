@@ -1,11 +1,10 @@
-package recovery
+package tx
 
 import (
 	"strconv"
 
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/logs"
-	"github.com/ksrnnb/go-rdb/tx"
 )
 
 type StartRecord struct {
@@ -34,7 +33,7 @@ func (sr *StartRecord) TxNumber() int {
 
 // Undo() undoes the operation encoded by this log record
 // do nothing in Start
-func (sr *StartRecord) Undo(tx *tx.Transaction) {}
+func (sr *StartRecord) Undo(tx *Transaction) {}
 
 func (sr *StartRecord) String() string {
 	return "<START " + strconv.Itoa(sr.txnum) + ">"

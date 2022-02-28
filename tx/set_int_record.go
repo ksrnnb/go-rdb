@@ -1,11 +1,10 @@
-package recovery
+package tx
 
 import (
 	"strconv"
 
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/logs"
-	"github.com/ksrnnb/go-rdb/tx"
 )
 
 type SetIntRecord struct {
@@ -52,7 +51,7 @@ func (sir *SetIntRecord) TxNumber() int {
 }
 
 // Undo() undoes the operation encoded by this log record
-func (sir *SetIntRecord) Undo(tx *tx.Transaction) {
+func (sir *SetIntRecord) Undo(tx *Transaction) {
 	tx.Pin(sir.blk)
 	tx.SetInt(sir.blk, sir.offset, sir.val, false)
 	tx.Unpin(sir.blk)

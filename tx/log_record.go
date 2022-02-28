@@ -1,10 +1,9 @@
-package recovery
+package tx
 
 import (
 	"fmt"
 
 	"github.com/ksrnnb/go-rdb/file"
-	"github.com/ksrnnb/go-rdb/tx"
 )
 
 const (
@@ -17,9 +16,9 @@ const (
 )
 
 type LogRecord interface {
-	Op() int                 // returns the log record's type
-	TxNumber() int           // returns the transaction id stored with the log record
-	Undo(tx *tx.Transaction) // undoes the operation encoded by this log record
+	Op() int              // returns the log record's type
+	TxNumber() int        // returns the transaction id stored with the log record
+	Undo(tx *Transaction) // undoes the operation encoded by this log record
 }
 
 func CreateLogRecord(b []byte) (LogRecord, error) {

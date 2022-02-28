@@ -1,49 +1,48 @@
-package recovery
+package tx
 
 import (
 	"strconv"
 
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/logs"
-	"github.com/ksrnnb/go-rdb/tx"
 )
 
-type CommitRecord struct {
+type RollbackRecord struct {
 	txnum int
 }
 
-func NewCommitRecord(p *file.Page) (*CommitRecord, error) {
+func NewRollbackRecord(p *file.Page) (*RollbackRecord, error) {
 	tpos := intByteSize
 	txnum := p.GetInt(tpos)
 
 	if err := p.Err(); err != nil {
 		return nil, err
 	}
-	return &CommitRecord{txnum: txnum}, nil
+	return &RollbackRecord{txnum: txnum}, nil
 }
 
 // Op() returns the log record's type
-func (cr *CommitRecord) Op() int {
-	return Commit
+func (rr *RollbackRecord) Op() int {
+	return Rollback
 }
 
 // TxNumber() returns the transaction id stored with the log record
-func (cr *CommitRecord) TxNumber() int {
-	return cr.txnum
+func (rr *RollbackRecord) TxNumber() int {
+	return rr.txnum
 }
 
 // Undo() undoes the operation encoded by this log record
-// do nothing in Commit
-func (cr *CommitRecord) Undo(tx *tx.Transaction) {}
+// do nothing in Rollback
+func (rr *RollbackRecord) Undo(tx *Transaction) {}
 
-func (cr *CommitRecord) String() string {
-	return "<COMMIT " + strconv.Itoa(cr.txnum) + ">"
+func (rr *RollbackRecord) String() string {
+	return "<ROLLBACK " + strconv.Itoa(rr.txnum) + ">"
 }
 
-func writeCommitToLog(lm *logs.LogManager, txnum int) (latestLSN int, err error) {
+func writeRollBackToLog(lm *logs.LogManager, txnum int) (latestLSN int, err error) {
 	rec := make([]byte, 2*intByteSize)
 	p := file.NewPageWithBuf(rec)
-	p.SetInt(0, Commit)
+	p.SetInt(0, Rollback)
 	p.SetInt(intByteSize, txnum)
 
 	if err := p.Err(); err != nil {

@@ -1,4 +1,4 @@
-package recovery
+package tx
 
 import (
 	"strconv"
@@ -6,7 +6,6 @@ import (
 	"github.com/ksrnnb/go-rdb/bytebuffer"
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/logs"
-	"github.com/ksrnnb/go-rdb/tx"
 )
 
 var intByteSize = getIntByteSize()
@@ -59,7 +58,7 @@ func (ssr *SetStringRecord) TxNumber() int {
 }
 
 // Undo() undoes the operation encoded by this log record
-func (ssr *SetStringRecord) Undo(tx *tx.Transaction) {
+func (ssr *SetStringRecord) Undo(tx *Transaction) {
 	tx.Pin(ssr.blk)
 	tx.SetString(ssr.blk, ssr.offset, ssr.val, false)
 	tx.Unpin(ssr.blk)
