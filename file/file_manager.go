@@ -8,16 +8,18 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
-// TODO: synchronized
 type FileManager struct {
 	dbDirectory string
 	blockSize   int
 	isNew       bool
 	openFiles   map[string]*os.File
+	mux         sync.Mutex
 }
 
+// NewFileManager はシステム起動時に SimpleDB によって実行される
 func NewFileManager(dbDirectory string, bs int) (*FileManager, error) {
 	var isNew bool
 	if _, err := os.Stat(dbDirectory); os.IsNotExist(err) {
@@ -57,6 +59,8 @@ func NewFileManager(dbDirectory string, bs int) (*FileManager, error) {
 
 // 指定したブロック領域をページに読み込む
 func (fm *FileManager) Read(blk *BlockID, p *Page) error {
+	fm.mux.Lock()
+	defer fm.mux.Unlock()
 	f, err := fm.getFile(blk.FileName())
 
 	if err != nil {
@@ -91,6 +95,8 @@ func (fm *FileManager) Read(blk *BlockID, p *Page) error {
 
 // 指定したブロック位置にページの内容を全て書き込む
 func (fm *FileManager) Write(blk *BlockID, p *Page) error {
+	fm.mux.Lock()
+	defer fm.mux.Unlock()
 	f, err := fm.getFile(blk.FileName())
 
 	if err != nil {
@@ -105,6 +111,8 @@ func (fm *FileManager) Write(blk *BlockID, p *Page) error {
 
 // Append()は新しく空のブロックを作成して、指定したファイルに割り当てる。
 func (fm *FileManager) Append(filename string) (*BlockID, error) {
+	fm.mux.Lock()
+	defer fm.mux.Unlock()
 	newBlkNum, err := fm.Length(filename)
 	if err != nil {
 		return nil, err
