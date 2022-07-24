@@ -102,7 +102,8 @@ func (lm *LogManager) Append(logrec []byte) (latestLSN int, err error) {
 	// fmt.Printf("lastSavedLSN: %d, latestLSN: %d, boundary: %d, logrec: %s, recSize: %d, bytesNeeded: %d\n\n",
 	// 	lm.lastSavedLSN, lm.latestLSN, boundary, logrec, recSize, bytesNeeded)
 
-	// 先頭に最後に書き込んだ位置(int)を記録するだけのバッファがあるかどうか
+	// boundary より左側に bytesNeeded 分だけ書き込む余地があるかどうか
+	// intByteSize は boundary 分の容量
 	if boundary-bytesNeeded < intByteSize {
 		err = lm.flush()
 		if err != nil {
@@ -144,6 +145,7 @@ func (lm *LogManager) appendNewBlock() (*file.BlockID, error) {
 		return nil, fmt.Errorf("log: appendNewBlock() cannot append new block, %w", err)
 	}
 
+	// boundary を末尾に設定
 	lm.logPage.SetInt(0, lm.fm.BlockSize())
 
 	if err := lm.logPage.Err(); err != nil {

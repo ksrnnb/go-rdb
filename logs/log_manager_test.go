@@ -64,7 +64,7 @@ func printLogRecords(t *testing.T, lm *LogManager) {
 }
 
 func newLogManager(t *testing.T) *LogManager {
-	fm := newFileManaer(t)
+	fm := newFileManager(t)
 	lm, err := NewLogManager(fm, "tempLogTest")
 
 	if err != nil {
