@@ -2,6 +2,7 @@ package logs
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/ksrnnb/go-rdb/bytebuffer"
 	"github.com/ksrnnb/go-rdb/file"
@@ -16,6 +17,7 @@ type LogManager struct {
 	currentBlk   *file.BlockID
 	latestLSN    int // LSN: Log Sequence Number
 	lastSavedLSN int
+	mux          sync.Mutex
 }
 
 // NewLogManager()は1ブロックサイズ分のバイトバッファをもつページを1つ確保する
@@ -84,6 +86,8 @@ func (lm *LogManager) flush() error {
 // 収まらない場合は、現在のページをディスクに書き込み、appendNewBlock()を呼ぶ
 // 処理後、LSNを1インクリメントする（latestLSN）
 func (lm *LogManager) Append(logrec []byte) (latestLSN int, err error) {
+	lm.mux.Lock()
+	defer lm.mux.Unlock()
 	// boundaryは前回書き込んだ最後の位置
 	boundary := lm.logPage.GetInt(0)
 
