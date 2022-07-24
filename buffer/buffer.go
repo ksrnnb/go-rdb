@@ -12,9 +12,9 @@ type Buffer struct {
 	lm       *logs.LogManager
 	contents *file.Page
 	blk      *file.BlockID
-	pins     int
-	txnum    int
-	lsn      int
+	pins     int // ページがピン留めされた回数
+	txnum    int // ページの変更を行なったトランザクションを識別する。-1 は未変更
+	lsn      int // 最新のログレコードの Log Sequence Number
 }
 
 // 1個のバッファは1ページ分もつ

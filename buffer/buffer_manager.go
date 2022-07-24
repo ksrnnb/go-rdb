@@ -10,8 +10,8 @@ import (
 	"github.com/ksrnnb/go-rdb/logs"
 )
 
-// 10 * 1000 msec => 10 sec
-const maxTimeMilliSecond = 10000
+// デッドロックを回避するために、最大の待ち時間を設定する
+const maxWatingTime = 10 * time.Second
 
 var errNotExistUnpin = errors.New("unpin buffer doesn't exist")
 
@@ -108,7 +108,7 @@ func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
 
 // isWaitingTooLong()はmaxTimeを超えてwaitしているかどうかを返す
 func (bm *BufferManager) isWaitingTooLong(start time.Time) bool {
-	limit := start.Add(maxTimeMilliSecond * time.Millisecond)
+	limit := start.Add(maxWatingTime)
 
 	return time.Now().After(limit)
 }
