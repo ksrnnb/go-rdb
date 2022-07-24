@@ -3,6 +3,7 @@ package buffer
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/ksrnnb/go-rdb/file"
@@ -17,6 +18,7 @@ var errNotExistUnpin = errors.New("unpin buffer doesn't exist")
 type BufferManager struct {
 	bufferPool   []*Buffer
 	numAvailable int
+	mux          sync.Mutex
 }
 
 // NewBufferManager()はBufferManagerを返す
@@ -35,14 +37,17 @@ func NewBufferManager(fm *file.FileManager, lm *logs.LogManager, numbuffs int) *
 	return bm
 }
 
-// TODO: sync
 // unpin状態のバッファ数を返す
 func (bm *BufferManager) Available() int {
+	bm.mux.Lock()
+	defer bm.mux.Unlock()
 	return bm.numAvailable
 }
 
 // トランザクションNo.が一致するバッファを全てディスクに書き込む
 func (bm *BufferManager) FlushAll(txnum int) error {
+	bm.mux.Lock()
+	defer bm.mux.Unlock()
 	for _, b := range bm.bufferPool {
 		if b.ModifyingTx() == txnum {
 			err := b.flush()
@@ -57,6 +62,8 @@ func (bm *BufferManager) FlushAll(txnum int) error {
 
 // Unpin()は引数のBufferをunpinする
 func (bm *BufferManager) Unpin(b *Buffer) {
+	bm.mux.Lock()
+	defer bm.mux.Unlock()
 	b.unpin()
 
 	if !b.IsPinned() {
@@ -71,6 +78,8 @@ func (bm *BufferManager) Unpin(b *Buffer) {
 // pinできたらBufferを返す
 // ディスクに書き込む可能性のあるメソッドはPin()またはFlushAll()のみ
 func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
+	bm.mux.Lock()
+	defer bm.mux.Unlock()
 	t := time.Now()
 	b, err := bm.tryToPin(blk)
 
