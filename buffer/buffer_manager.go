@@ -18,7 +18,7 @@ var errNotExistUnpin = errors.New("unpin buffer doesn't exist")
 type BufferManager struct {
 	bufferPool   []*Buffer
 	numAvailable int
-	mux          sync.Mutex
+	cond         sync.Cond
 }
 
 // NewBufferManager()はBufferManagerを返す
@@ -28,6 +28,7 @@ func NewBufferManager(fm *file.FileManager, lm *logs.LogManager, numbuffs int) *
 	bm := &BufferManager{
 		bufferPool:   bp,
 		numAvailable: numbuffs,
+		cond:         *sync.NewCond(&sync.Mutex{}),
 	}
 
 	for i := 0; i < numbuffs; i++ {
@@ -39,15 +40,15 @@ func NewBufferManager(fm *file.FileManager, lm *logs.LogManager, numbuffs int) *
 
 // unpin状態のバッファ数を返す
 func (bm *BufferManager) Available() int {
-	bm.mux.Lock()
-	defer bm.mux.Unlock()
+	bm.cond.L.Lock()
+	defer bm.cond.L.Unlock()
 	return bm.numAvailable
 }
 
 // トランザクションNo.が一致するバッファを全てディスクに書き込む
 func (bm *BufferManager) FlushAll(txnum int) error {
-	bm.mux.Lock()
-	defer bm.mux.Unlock()
+	bm.cond.L.Lock()
+	defer bm.cond.L.Unlock()
 	for _, b := range bm.bufferPool {
 		if b.ModifyingTx() == txnum {
 			err := b.flush()
@@ -62,14 +63,14 @@ func (bm *BufferManager) FlushAll(txnum int) error {
 
 // Unpin()は引数のBufferをunpinする
 func (bm *BufferManager) Unpin(b *Buffer) {
-	bm.mux.Lock()
-	defer bm.mux.Unlock()
+	bm.cond.L.Lock()
+	defer bm.cond.L.Unlock()
 	b.unpin()
 
 	if !b.IsPinned() {
 		bm.numAvailable++
 
-		// TODO: unpinされたことを通知する
+		bm.cond.Signal()
 	}
 }
 
@@ -78,8 +79,8 @@ func (bm *BufferManager) Unpin(b *Buffer) {
 // pinできたらBufferを返す
 // ディスクに書き込む可能性のあるメソッドはPin()またはFlushAll()のみ
 func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
-	bm.mux.Lock()
-	defer bm.mux.Unlock()
+	bm.cond.L.Lock()
+	defer bm.cond.L.Unlock()
 	t := time.Now()
 	b, err := bm.tryToPin(blk)
 
@@ -90,9 +91,7 @@ func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
 	}
 
 	for b == nil && !bm.isWaitingTooLong(t) {
-		// TODO: 他のスレッドでUnpinされるのを待つ
-		// 暫定で1秒ごとにtryする
-		time.Sleep(1 * time.Second)
+		bm.cond.Wait()
 		b, err = bm.tryToPin(blk)
 		if err != nil {
 			if !errors.Is(err, errNotExistUnpin) {
