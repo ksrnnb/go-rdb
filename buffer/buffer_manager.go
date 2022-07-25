@@ -83,8 +83,10 @@ func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
 	t := time.Now()
 	b, err := bm.tryToPin(blk)
 
-	if err != nil && errors.Is(err, errNotExistUnpin) {
-		return nil, fmt.Errorf("buffer(): Pin() failed, %w", err)
+	if err != nil {
+		if !errors.Is(err, errNotExistUnpin) {
+			return nil, fmt.Errorf("buffer(): Pin() failed, %w", err)
+		}
 	}
 
 	for b == nil && !bm.isWaitingTooLong(t) {
@@ -92,8 +94,10 @@ func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
 		// 暫定で1秒ごとにtryする
 		time.Sleep(1 * time.Second)
 		b, err = bm.tryToPin(blk)
-		if err != nil && errors.Is(err, errNotExistUnpin) {
-			return nil, fmt.Errorf("buffer(): Pin() failed, %w", err)
+		if err != nil {
+			if !errors.Is(err, errNotExistUnpin) {
+				return nil, fmt.Errorf("buffer(): Pin() failed, %w", err)
+			}
 		}
 
 	}
@@ -118,17 +122,16 @@ func (bm *BufferManager) isWaitingTooLong(start time.Time) bool {
 // ブロックがない場合は、unpin状態のBufferを探す
 // unpinのBufferがあれば、引数のブロックをBufferに割り当てる（ディスク書き込み）
 // Bufferがない場合はnilを返す（=> pinできなかった）
-func (bm *BufferManager) tryToPin(blk *file.BlockID) (*Buffer, error) {
-	b := bm.findExistingBuffer(blk)
+func (bm *BufferManager) tryToPin(blk *file.BlockID) (b *Buffer, err error) {
+	b = bm.findExistingBuffer(blk)
 
 	if b == nil {
-		b = bm.chooseUnpinnedBuffer()
-
-		if b == nil {
-			return nil, errNotExistUnpin
+		b, err = bm.chooseUnpinnedBuffer()
+		if err != nil {
+			return nil, err
 		}
 
-		err := b.assignToBlock(blk)
+		err = b.assignToBlock(blk)
 		if err != nil {
 			return nil, fmt.Errorf("buffer(): tryToPin() failed, %w", err)
 		}
@@ -156,12 +159,12 @@ func (bm *BufferManager) findExistingBuffer(blk *file.BlockID) *Buffer {
 
 // chooseUnpinnedBuffer()はbufferPoolのうち、
 // unpin状態のものを探して一番初めに見つかったものを返す
-func (bm *BufferManager) chooseUnpinnedBuffer() *Buffer {
+func (bm *BufferManager) chooseUnpinnedBuffer() (*Buffer, error) {
 	for _, b := range bm.bufferPool {
 		if !b.IsPinned() {
-			return b
+			return b, nil
 		}
 	}
 
-	return nil
+	return nil, errNotExistUnpin
 }
