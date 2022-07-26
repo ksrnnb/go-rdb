@@ -68,8 +68,9 @@ func writeSetIntToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offset 
 	bpos := fpos + file.MaxLength(blk.FileName())
 	opos := bpos + intByteSize
 	vpos := opos + intByteSize
+	resSize := vpos + intByteSize
 
-	rec := make([]byte, intByteSize)
+	rec := make([]byte, resSize)
 	p := file.NewPageWithBuf(rec)
 	p.SetInt(0, SetInt)
 	p.SetInt(tpos, txnum)
