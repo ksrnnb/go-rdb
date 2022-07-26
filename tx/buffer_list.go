@@ -25,7 +25,7 @@ func newTxBuffer(blk *file.BlockID, buf *buffer.Buffer) *txBuffer {
 }
 
 func NewBufferList(bm *buffer.BufferManager) *BufferList {
-	return &BufferList{txBuffers: []*txBuffer{}, pins: []*file.BlockID{}, bm: bm}
+	return &BufferList{bm: bm}
 }
 
 func (bl *BufferList) getTxBuffer(blk *file.BlockID) (*txBuffer, error) {
@@ -77,8 +77,8 @@ func (bl *BufferList) unpinAll() error {
 		bl.bm.Unpin(txBuf.buf)
 	}
 
-	bl.txBuffers = []*txBuffer{}
-	bl.pins = []*file.BlockID{}
+	bl.txBuffers = nil
+	bl.pins = nil
 	return nil
 }
 
@@ -109,6 +109,9 @@ func (bl *BufferList) containsPin(blk *file.BlockID) bool {
 
 func (bl *BufferList) removeTxBuffer(blk *file.BlockID) {
 	for i, txBuf := range bl.txBuffers {
+		if txBuf == nil {
+			continue
+		}
 		if txBuf.blk.Equals(blk) {
 			copy(bl.txBuffers[:i], bl.txBuffers[:i+1])
 			bl.txBuffers[len(bl.txBuffers)-1] = nil
