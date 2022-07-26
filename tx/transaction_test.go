@@ -37,8 +37,8 @@ func TestTransaction(t *testing.T) {
 	newIntVal := intVal + 1
 	newStrVal := strVal + "!"
 
-	tx2.SetInt(blk, 80, newIntVal, true)
-	tx2.SetString(blk, 40, newStrVal, true)
+	require.NoError(t, tx2.SetInt(blk, 80, newIntVal, true))
+	require.NoError(t, tx2.SetString(blk, 40, newStrVal, true))
 	require.NoError(t, tx2.Commit())
 
 	tx3, err := NewTransaction(fm, lm, bm)
@@ -51,7 +51,7 @@ func TestTransaction(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "one!", strVal, "get string value")
 
-	tx3.SetInt(blk, 80, 9999, true)
+	require.NoError(t, tx3.SetInt(blk, 80, 9999, true))
 	intVal, err = tx3.GetInt(blk, 80)
 	require.NoError(t, err)
 	assert.Equal(t, 9999, intVal, "get int value")
