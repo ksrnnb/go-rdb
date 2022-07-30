@@ -2,12 +2,13 @@ package concurrency
 
 import (
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/ksrnnb/go-rdb/file"
 )
 
-const maxTimeMilliSecond = 10000
+const maxWaitingTime = 15 * time.Second
 const xLocked = -1
 
 var ErrLockAbort = errors.New("concurrency: lock abort error")
@@ -19,14 +20,16 @@ type Lock struct {
 
 type LockTable struct {
 	locks []*Lock
+	mux   sync.Mutex
 }
 
 func NewLockTable() *LockTable {
 	return &LockTable{}
 }
 
-// todo: sync
 func (lt *LockTable) SLock(blk *file.BlockID) error {
+	lt.mux.Lock()
+	defer lt.mux.Unlock()
 	start := time.Now()
 	for lt.hasXLock(blk) && !isWaitingTooLong(start) {
 		// TODO: 修正
@@ -48,6 +51,8 @@ func (lt *LockTable) hasXLock(blk *file.BlockID) bool {
 }
 
 func (lt *LockTable) XLock(blk *file.BlockID) error {
+	lt.mux.Lock()
+	defer lt.mux.Unlock()
 	start := time.Now()
 	for lt.hasOtherSLocks(blk) && !isWaitingTooLong(start) {
 		// TODO: 修正
@@ -68,12 +73,15 @@ func (lt *LockTable) hasOtherSLocks(blk *file.BlockID) bool {
 }
 
 func (lt *LockTable) Unlock(blk *file.BlockID) {
+	lt.mux.Lock()
+	defer lt.mux.Unlock()
 	val := lt.getLockVal(blk)
 
 	if val > 1 {
 		lt.setLockVal(blk, val-1)
 	} else {
 		lt.deleteLock(blk)
+		// TODO: notifyAll()
 	}
 }
 
@@ -108,7 +116,7 @@ func (lt *LockTable) deleteLock(blk *file.BlockID) {
 }
 
 func isWaitingTooLong(start time.Time) bool {
-	limit := start.Add(maxTimeMilliSecond * time.Millisecond)
+	limit := start.Add(maxWaitingTime)
 
 	return time.Now().After(limit)
 }
