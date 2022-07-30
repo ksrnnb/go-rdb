@@ -1,6 +1,8 @@
 package concurrency
 
-import "github.com/ksrnnb/go-rdb/file"
+import (
+	"github.com/ksrnnb/go-rdb/file"
+)
 
 var lockTable *LockTable = NewLockTable()
 
@@ -25,12 +27,6 @@ func NewConcurrencyManager() *ConcurrencyManager {
 }
 
 func (cm *ConcurrencyManager) SLock(blk *file.BlockID) error {
-	lock := cm.getConcurrencyManagerLock(blk)
-
-	if lock != nil {
-		return nil
-	}
-
 	err := lockTable.SLock(blk)
 	if err != nil {
 		return err
@@ -41,16 +37,12 @@ func (cm *ConcurrencyManager) SLock(blk *file.BlockID) error {
 }
 
 func (cm *ConcurrencyManager) XLock(blk *file.BlockID) error {
-	if !cm.hasXLock(blk) {
-		cm.SLock(blk)
-		err := lockTable.XLock(blk)
-		if err != nil {
-			return err
-		}
-
-		cm.setConcurrencyManagerLock(blk, XLockType)
+	err := lockTable.XLock(blk)
+	if err != nil {
+		return err
 	}
 
+	cm.setConcurrencyManagerLock(blk, XLockType)
 	return nil
 }
 
@@ -59,7 +51,7 @@ func (cm *ConcurrencyManager) Release() {
 		lockTable.Unlock(lock.blk)
 	}
 
-	cm.locks = []*ConcurrencyManagerLock{}
+	cm.locks = nil
 }
 
 func (cm *ConcurrencyManager) hasXLock(blk *file.BlockID) bool {
@@ -83,9 +75,12 @@ func (cm *ConcurrencyManager) getConcurrencyManagerLock(blk *file.BlockID) *Conc
 }
 
 func (cm *ConcurrencyManager) setConcurrencyManagerLock(blk *file.BlockID, ty LockType) {
-	for _, lock := range cm.locks {
+	for i, lock := range cm.locks {
 		if blk.Equals(lock.blk) {
 			lock.ty = ty
+			cm.locks[i] = lock
+			return
 		}
 	}
+	cm.locks = append(cm.locks, &ConcurrencyManagerLock{blk: blk, ty: ty})
 }
