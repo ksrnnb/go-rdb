@@ -27,15 +27,16 @@ func NewConcurrencyManager() *ConcurrencyManager {
 func (cm *ConcurrencyManager) SLock(blk *file.BlockID) error {
 	lock := cm.getConcurrencyManagerLock(blk)
 
-	if lock == nil {
-		err := lockTable.SLock(blk)
-		if err != nil {
-			return err
-		}
-
-		cm.setConcurrencyManagerLock(blk, SLockType)
+	if lock != nil {
+		return nil
 	}
 
+	err := lockTable.SLock(blk)
+	if err != nil {
+		return err
+	}
+
+	cm.setConcurrencyManagerLock(blk, SLockType)
 	return nil
 }
 
