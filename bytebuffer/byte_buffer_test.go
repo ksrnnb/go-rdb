@@ -2,31 +2,40 @@ package bytebuffer
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSetPosition(t *testing.T) {
 	bb := New(5)
 
-	bb.Position(0)
-
-	if bb.pos != 0 {
-		t.Errorf("bb.pos = %d want 0", bb.pos)
+	tests := []struct {
+		name string
+		pos  int
+		want int
+	}{
+		{
+			name: "position 4",
+			pos:  0,
+			want: 0,
+		},
+		{
+			name: "position 4",
+			pos:  4,
+			want: 4,
+		},
+		{
+			name: "position 5 over capacity",
+			pos:  5,
+			want: 4,
+		},
 	}
 
-	bb.Position(4)
-
-	if bb.pos != 4 {
-		t.Errorf("bb.pos = %d want 5", bb.pos)
-	}
-}
-
-func TestCannotSetPosition(t *testing.T) {
-	bb := New(5)
-	bb.Position(0)
-	bb.Position(5)
-
-	if bb.pos != 0 {
-		t.Errorf("bb.pos = %d want 0", bb.pos)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			bb.Position(test.pos)
+			assert.True(t, bb.pos == test.want)
+		})
 	}
 }
 
@@ -35,9 +44,7 @@ func TestPut(t *testing.T) {
 	hello := []byte{'h', 'e', 'l', 'l', 'o'}
 	bb.Put(hello)
 
-	if bb.Err() != nil {
-		t.Errorf(`bb.Err() = %v want nil`, bb.Err())
-	}
+	assert.NoError(t, bb.Err())
 }
 
 func TestGet(t *testing.T) {
@@ -49,9 +56,7 @@ func TestGet(t *testing.T) {
 	bb.Position(0)
 	bb.Get(dst)
 
-	if string(dst) != "hello" {
-		t.Errorf(`bb.Get(dst) = '%s', want "hello"`, dst)
-	}
+	assert.Equal(t, "hello", string(dst))
 }
 
 func TestPutInt(t *testing.T) {
@@ -59,16 +64,12 @@ func TestPutInt(t *testing.T) {
 
 	bb.PutInt(100)
 
-	if bb.Err() != nil {
-		t.Errorf(`bb.Err() = %v want nil`, bb.Err())
-	}
+	assert.NoError(t, bb.Err())
 
 	newBB := New(0)
 	newBB.PutInt(100)
 
-	if newBB.Err() == nil {
-		t.Errorf(`newBB.Err() should has error but is nil`)
-	}
+	assert.Error(t, newBB.Err())
 }
 
 func TestGetInt(t *testing.T) {
@@ -78,9 +79,7 @@ func TestGetInt(t *testing.T) {
 
 	val := bb.GetInt()
 
-	if val != 100 {
-		t.Errorf(`val = %d want 100`, val)
-	}
+	assert.Equal(t, 100, val)
 }
 
 func TestJapanese(t *testing.T) {
@@ -92,9 +91,7 @@ func TestJapanese(t *testing.T) {
 	dst := make([]byte, len(hello))
 	bb.Get(dst)
 
-	if string(dst) != "こんにちわ" {
-		t.Errorf(`bb.Get(dst) = '%s', want "こんにちわ"`, dst)
-	}
+	assert.Equal(t, "こんにちわ", string(dst))
 }
 
 func TestMaxByte(t *testing.T) {
@@ -110,9 +107,7 @@ func TestMaxByte(t *testing.T) {
 
 	for name, tt := range cases {
 		t.Run(name, func(t *testing.T) {
-			if MaxLength(tt.str) != tt.len {
-				t.Errorf("'MaxLength(%s)' should be %d, but given %d", tt.str, tt.len, MaxLength(tt.str))
-			}
+			assert.Equal(t, tt.len, MaxLength(tt.str))
 		})
 	}
 }
