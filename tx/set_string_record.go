@@ -25,22 +25,36 @@ func NewSetStringRecord(p *file.Page) (*SetStringRecord, error) {
 	ssr := &SetStringRecord{}
 
 	tpos := intByteSize
-	ssr.txnum = p.GetInt(tpos)
+	var err error
+
+	ssr.txnum, err = p.GetInt(tpos)
+	if err != nil {
+		return nil, err
+	}
 
 	fpos := tpos + intByteSize
-	filename := p.GetString(fpos)
+	filename, err := p.GetString(fpos)
+	if err != nil {
+		return nil, err
+	}
 
 	bpos := fpos + file.MaxLength(filename)
-	blknum := p.GetInt(bpos)
+	blknum, err := p.GetInt(bpos)
+	if err != nil {
+		return nil, err
+	}
 
 	ssr.blk = file.NewBlockID(filename, blknum)
 	opos := bpos + intByteSize
-	ssr.offset = p.GetInt(opos)
+	ssr.offset, err = p.GetInt(opos)
+	if err != nil {
+		return nil, err
+	}
 
 	vpos := opos + intByteSize
-	ssr.val = p.GetString(vpos)
+	ssr.val, err = p.GetString(vpos)
 
-	if err := p.Err(); err != nil {
+	if err != nil {
 		return nil, err
 	}
 
@@ -79,14 +93,28 @@ func writeSetStringToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offs
 
 	rec := make([]byte, recLen)
 	p := file.NewPageWithBuf(rec)
-	p.SetInt(0, SetString)
-	p.SetInt(tpos, txnum)
-	p.SetString(fpos, blk.FileName())
-	p.SetInt(bpos, blk.Number())
-	p.SetInt(opos, offset)
-	p.SetString(vpos, val)
 
-	if err := p.Err(); err != nil {
+	if err := p.SetInt(0, SetString); err != nil {
+		return 0, err
+	}
+
+	if err := p.SetInt(tpos, txnum); err != nil {
+		return 0, err
+	}
+
+	if err := p.SetString(fpos, blk.FileName()); err != nil {
+		return 0, err
+	}
+
+	if err := p.SetInt(bpos, blk.Number()); err != nil {
+		return 0, err
+	}
+
+	if err := p.SetInt(opos, offset); err != nil {
+		return 0, err
+	}
+
+	if err := p.SetString(vpos, val); err != nil {
 		return 0, err
 	}
 

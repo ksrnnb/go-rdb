@@ -23,8 +23,8 @@ type LogRecord interface {
 
 func CreateLogRecord(b []byte) (LogRecord, error) {
 	p := file.NewPageWithBuf(b)
-	recordType := p.GetInt(0)
-	if err := p.Err(); err != nil {
+	recordType, err := p.GetInt(0)
+	if err != nil {
 		return nil, fmt.Errorf("tx: CreateLogRecord() failed, %w", err)
 	}
 

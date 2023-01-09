@@ -13,9 +13,9 @@ type CommitRecord struct {
 
 func NewCommitRecord(p *file.Page) (*CommitRecord, error) {
 	tpos := intByteSize
-	txnum := p.GetInt(tpos)
+	txnum, err := p.GetInt(tpos)
 
-	if err := p.Err(); err != nil {
+	if err != nil {
 		return nil, err
 	}
 	return &CommitRecord{txnum: txnum}, nil
@@ -42,10 +42,13 @@ func (cr *CommitRecord) String() string {
 func writeCommitToLog(lm *logs.LogManager, txnum int) (latestLSN int, err error) {
 	rec := make([]byte, 2*intByteSize)
 	p := file.NewPageWithBuf(rec)
-	p.SetInt(0, Commit)
-	p.SetInt(intByteSize, txnum)
+	err = p.SetInt(0, Commit)
+	if err != nil {
+		return 0, err
+	}
 
-	if err := p.Err(); err != nil {
+	err = p.SetInt(intByteSize, txnum)
+	if err != nil {
 		return 0, err
 	}
 

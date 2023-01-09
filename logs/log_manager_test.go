@@ -22,9 +22,8 @@ func createRecords(t *testing.T, lm *LogManager, start, end int) {
 		buf := make([]byte, npos+intByteSize)
 
 		p := file.NewPageWithBuf(buf)
-		p.SetString(0, s)
-		p.SetInt(npos, 100+i)
-		require.NoError(t, p.Err())
+		require.NoError(t, p.SetString(0, s))
+		require.NoError(t, p.SetInt(npos, 100+i))
 
 		_, err := lm.Append(buf)
 		require.NoError(t, err)
@@ -45,11 +44,12 @@ func printLogRecords(t *testing.T, lm *LogManager) {
 		}
 
 		page := file.NewPageWithBuf(rec)
-		str := page.GetString(0)
-		npos := file.MaxLength(str)
-		val := page.GetInt(npos)
+		str, err := page.GetString(0)
+		require.NoError(t, err)
 
-		require.NoError(t, page.Err())
+		npos := file.MaxLength(str)
+		val, err := page.GetInt(npos)
+		require.NoError(t, err)
 
 		fmt.Printf("[%s , %d]\n", str, val)
 		fmt.Printf("li.currentPos: %d, blocksize: %d, blk.Number(): %d\n",

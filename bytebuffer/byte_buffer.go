@@ -11,24 +11,28 @@ const IntByteSize = 4
 type ByteBuffer struct {
 	buf []byte // contents are the bytes buf[off : len(buf)]
 	pos int    // read at &buf[off], write at &buf[len(buf)]
-	err error
 }
 
 func New(bs int) *ByteBuffer {
-	return &ByteBuffer{make([]byte, bs), 0, nil}
+	return &ByteBuffer{make([]byte, bs), 0}
 }
 
 func NewWithBuf(buf []byte) *ByteBuffer {
-	return &ByteBuffer{buf, 0, nil}
+	return &ByteBuffer{buf, 0}
 }
 
-// Position sets bb.pos
-func (bb *ByteBuffer) Position(pos int) {
+// SetPosition sets bb.pos
+func (bb *ByteBuffer) SetPosition(pos int) error {
 	if pos >= bb.Size() {
-		bb.err = fmt.Errorf("bytebuffer: Position() cannot set position %d", pos)
-	} else {
-		bb.pos = pos
+		return fmt.Errorf("bytebuffer: Position() cannot set position %d", pos)
 	}
+	bb.pos = pos
+	return nil
+}
+
+// SetZeroPosition sets bb.pos=0
+func (bb *ByteBuffer) SetZeroPosition() {
+	bb.pos = 0
 }
 
 // CurrentPosition() returns current position
@@ -37,59 +41,44 @@ func (bb *ByteBuffer) CurrentPosition() int {
 }
 
 // Get copies bb.buf to buf and advance position the length of buf
-func (bb *ByteBuffer) Get(buf []byte) {
-	if bb.err != nil {
-		return
-	}
-
+func (bb *ByteBuffer) Get(buf []byte) error {
 	len := len(buf)
 	tail := bb.pos + len
 
 	if !bb.canStoreBytes(buf) {
-		bb.err = fmt.Errorf("bytebuffer: Get() cannot get []byte")
-		return
+		return fmt.Errorf("bytebuffer: Get() cannot get []byte")
 	}
 
 	copy(buf[0:], bb.buf[bb.pos:tail])
 	bb.pos += len
+	return nil
 }
 
 // GetInt gets integer in current posotion
 func (bb *ByteBuffer) GetInt() int {
-	if bb.err != nil {
-		return 0
-	}
-
 	byteLen := readInt(bb.buf[bb.pos:])
-
 	bb.pos += IntByteSize
 
 	return int(byteLen)
 }
 
 // GetIntWithPosition get integers at the specified position (pos)
-func (bb *ByteBuffer) GetIntWithPosition(pos int) int {
+func (bb *ByteBuffer) GetIntWithPosition(pos int) (int, error) {
 	if pos+IntByteSize > bb.Size() {
-		bb.err = fmt.Errorf("bytebuffer: GetIntWithPositoin() cannot get with position %d", pos)
-		return 0
+		return 0, fmt.Errorf("bytebuffer: GetIntWithPositoin() cannot get with position %d", pos)
 	}
 
 	bb.pos = pos
 	bytelen := readInt(bb.buf[bb.pos:])
 
 	bb.pos += IntByteSize
-	return int(bytelen)
+	return int(bytelen), nil
 }
 
 // PutInt set integer in current position and advance position the size of val
-func (bb *ByteBuffer) PutInt(val int) {
-	if bb.err != nil {
-		return
-	}
-
+func (bb *ByteBuffer) PutInt(val int) error {
 	if !bb.canStoreInt(val) {
-		bb.err = fmt.Errorf("bytebuffer: PutInt() cannot put '%d'", val)
-		return
+		return fmt.Errorf("bytebuffer: PutInt() cannot put '%d'", val)
 	}
 
 	b := make([]byte, IntByteSize)
@@ -97,21 +86,18 @@ func (bb *ByteBuffer) PutInt(val int) {
 
 	copy(bb.buf[bb.pos:], b)
 	bb.pos += IntByteSize
+	return nil
 }
 
 // Put set []byte in current position and advance position the size of []byte
-func (bb *ByteBuffer) Put(b []byte) {
-	if bb.err != nil {
-		return
-	}
-
+func (bb *ByteBuffer) Put(b []byte) error {
 	if !bb.canStoreBytes(b) {
-		bb.err = fmt.Errorf("bytebuffer: Put() cannot put []byte '%s'", b)
-		return
+		return fmt.Errorf("bytebuffer: Put() cannot put []byte '%s'", b)
 	}
 
 	copy(bb.buf[bb.pos:], b)
 	bb.pos += len(b)
+	return nil
 }
 
 func (bb *ByteBuffer) ReadBuf() []byte {
@@ -131,10 +117,6 @@ func (bb *ByteBuffer) WriteBuf(b []byte) error {
 	}
 
 	return nil
-}
-
-func (bb *ByteBuffer) Err() error {
-	return bb.err
 }
 
 func (bb *ByteBuffer) Size() int {

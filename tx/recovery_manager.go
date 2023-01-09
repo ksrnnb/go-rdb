@@ -91,9 +91,9 @@ func (rm *RecoveryManager) Recover() error {
 func (rm *RecoveryManager) SetInt(buf *buffer.Buffer, offset, newVal int) (latestLSN int, err error) {
 	p := buf.Contents()
 
-	oldVal := p.GetInt(offset)
+	oldVal, err := p.GetInt(offset)
 
-	if err := p.Err(); err != nil {
+	if err != nil {
 		return 0, err
 	}
 
@@ -104,9 +104,9 @@ func (rm *RecoveryManager) SetInt(buf *buffer.Buffer, offset, newVal int) (lates
 func (rm *RecoveryManager) SetString(buf *buffer.Buffer, offset int, newVal string) (latestLSN int, err error) {
 	p := buf.Contents()
 
-	oldVal := p.GetString(offset)
+	oldVal, err := p.GetString(offset)
 
-	if err := p.Err(); err != nil {
+	if err != nil {
 		return 0, err
 	}
 

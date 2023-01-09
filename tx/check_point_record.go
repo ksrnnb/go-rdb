@@ -33,9 +33,8 @@ func (cpr *CheckPointRecord) String() string {
 func writeCheckPointToLog(lm *logs.LogManager) (latestLSN int, err error) {
 	rec := make([]byte, intByteSize)
 	p := file.NewPageWithBuf(rec)
-	p.SetInt(0, CheckPoint)
-
-	if err := p.Err(); err != nil {
+	err = p.SetInt(0, CheckPoint)
+	if err != nil {
 		return 0, err
 	}
 

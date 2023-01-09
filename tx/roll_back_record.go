@@ -13,9 +13,8 @@ type RollbackRecord struct {
 
 func NewRollbackRecord(p *file.Page) (*RollbackRecord, error) {
 	tpos := intByteSize
-	txnum := p.GetInt(tpos)
-
-	if err := p.Err(); err != nil {
+	txnum, err := p.GetInt(tpos)
+	if err != nil {
 		return nil, err
 	}
 	return &RollbackRecord{txnum: txnum}, nil
@@ -42,10 +41,13 @@ func (rr *RollbackRecord) String() string {
 func writeRollBackToLog(lm *logs.LogManager, txnum int) (latestLSN int, err error) {
 	rec := make([]byte, 2*intByteSize)
 	p := file.NewPageWithBuf(rec)
-	p.SetInt(0, Rollback)
-	p.SetInt(intByteSize, txnum)
+	err = p.SetInt(0, Rollback)
+	if err != nil {
+		return 0, err
+	}
 
-	if err := p.Err(); err != nil {
+	err = p.SetInt(intByteSize, txnum)
+	if err != nil {
 		return 0, err
 	}
 

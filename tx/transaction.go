@@ -90,9 +90,9 @@ func (tx *Transaction) GetInt(blk *file.BlockID, offset int) (int, error) {
 	}
 
 	p := txBuf.buf.Contents()
-	val := p.GetInt(offset)
+	val, err := p.GetInt(offset)
 
-	if err := p.Err(); err != nil {
+	if err != nil {
 		return 0, err
 	}
 
@@ -111,9 +111,8 @@ func (tx *Transaction) GetString(blk *file.BlockID, offset int) (string, error) 
 	}
 
 	p := txBuf.buf.Contents()
-	val := p.GetString(offset)
-
-	if err := p.Err(); err != nil {
+	val, err := p.GetString(offset)
+	if err != nil {
 		return "", err
 	}
 
@@ -139,8 +138,8 @@ func (tx *Transaction) SetString(blk *file.BlockID, offset int, val string, okTo
 		}
 	}
 	p := txBuf.buf.Contents()
-	p.SetString(offset, val)
-	if err := p.Err(); err != nil {
+	err = p.SetString(offset, val)
+	if err != nil {
 		return err
 	}
 
@@ -167,8 +166,8 @@ func (tx *Transaction) SetInt(blk *file.BlockID, offset int, val int, okToLog bo
 		}
 	}
 	p := txBuf.buf.Contents()
-	p.SetInt(offset, val)
-	if err := p.Err(); err != nil {
+	err = p.SetInt(offset, val)
+	if err != nil {
 		return err
 	}
 

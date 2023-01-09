@@ -5,6 +5,7 @@ import (
 
 	. "github.com/ksrnnb/go-rdb/file"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetBytes(t *testing.T) {
@@ -12,11 +13,13 @@ func TestGetBytes(t *testing.T) {
 	page := NewPage(1024)
 
 	pos := 50
-	page.SetBytes(pos, hello)
-	v := page.GetInt(pos)
+	require.NoError(t, page.SetBytes(pos, hello))
+	v, err := page.GetInt(pos)
+	assert.NoError(t, err)
 	assert.Equal(t, 5, v)
 
-	bv := page.GetBytes(pos)
+	bv, err := page.GetBytes(pos)
+	assert.NoError(t, err)
 	assert.Equal(t, "hello", string(bv))
 }
 
@@ -24,9 +27,10 @@ func TestGetInt(t *testing.T) {
 	page := NewPage(1024)
 
 	pos := 50
-	page.SetInt(pos, 100)
-	val := page.GetInt(pos)
+	require.NoError(t, page.SetInt(pos, 100))
+	val, err := page.GetInt(pos)
 
+	assert.NoError(t, err)
 	assert.Equal(t, 100, val)
 }
 
@@ -34,9 +38,10 @@ func TestGetString(t *testing.T) {
 	page := NewPage(1024)
 
 	pos := 50
-	page.SetString(pos, "hello")
-	str := page.GetString(pos)
+	require.NoError(t, page.SetString(pos, "hello"))
+	str, err := page.GetString(pos)
 
+	assert.NoError(t, err)
 	assert.Equal(t, "hello", str)
 }
 

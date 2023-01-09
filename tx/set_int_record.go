@@ -18,22 +18,35 @@ func NewSetIntRecord(p *file.Page) (*SetIntRecord, error) {
 	sir := &SetIntRecord{}
 
 	tpos := intByteSize
-	sir.txnum = p.GetInt(tpos)
+
+	var err error
+	sir.txnum, err = p.GetInt(tpos)
+	if err != nil {
+		return nil, err
+	}
 
 	fpos := tpos + intByteSize
-	filename := p.GetString(fpos)
+	filename, err := p.GetString(fpos)
+	if err != nil {
+		return nil, err
+	}
 
 	bpos := fpos + file.MaxLength(filename)
-	blknum := p.GetInt(bpos)
+	blknum, err := p.GetInt(bpos)
+	if err != nil {
+		return nil, err
+	}
 
 	sir.blk = file.NewBlockID(filename, blknum)
 	opos := bpos + intByteSize
-	sir.offset = p.GetInt(opos)
+	sir.offset, err = p.GetInt(opos)
+	if err != nil {
+		return nil, err
+	}
 
 	vpos := opos + intByteSize
-	sir.val = p.GetInt(vpos)
-
-	if err := p.Err(); err != nil {
+	sir.val, err = p.GetInt(vpos)
+	if err != nil {
 		return nil, err
 	}
 
@@ -72,14 +85,28 @@ func writeSetIntToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offset 
 
 	rec := make([]byte, resSize)
 	p := file.NewPageWithBuf(rec)
-	p.SetInt(0, SetInt)
-	p.SetInt(tpos, txnum)
-	p.SetString(fpos, blk.FileName())
-	p.SetInt(bpos, blk.Number())
-	p.SetInt(opos, offset)
-	p.SetInt(vpos, val)
 
-	if err := p.Err(); err != nil {
+	if err := p.SetInt(0, SetInt); err != nil {
+		return 0, err
+	}
+
+	if err := p.SetInt(tpos, txnum); err != nil {
+		return 0, err
+	}
+
+	if err := p.SetString(fpos, blk.FileName()); err != nil {
+		return 0, err
+	}
+
+	if err := p.SetInt(bpos, blk.Number()); err != nil {
+		return 0, err
+	}
+
+	if err := p.SetInt(opos, offset); err != nil {
+		return 0, err
+	}
+
+	if err := p.SetInt(vpos, val); err != nil {
 		return 0, err
 	}
 

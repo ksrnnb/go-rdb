@@ -15,10 +15,10 @@ func TestBuffer(t *testing.T) {
 
 	p := buff1.Contents()
 
-	n := p.GetInt(80)
+	n, err := p.GetInt(80)
 	require.NoError(t, err)
 
-	p.SetInt(80, n+1)
+	err = p.SetInt(80, n+1)
 	require.NoError(t, err)
 	buff1.SetModified(1, 0)
 
@@ -41,7 +41,7 @@ func TestBuffer(t *testing.T) {
 	require.NoError(t, err)
 
 	p2 := buff2.Contents()
-	p2.SetInt(80, 9999)
+	err = p2.SetInt(80, 9999)
 	require.NoError(t, err)
 
 	buff2.SetModified(1, 0)

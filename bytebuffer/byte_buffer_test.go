@@ -4,36 +4,46 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSetPosition(t *testing.T) {
 	bb := New(5)
 
 	tests := []struct {
-		name string
-		pos  int
-		want int
+		name      string
+		pos       int
+		want      int
+		wantError bool
 	}{
 		{
-			name: "position 4",
-			pos:  0,
-			want: 0,
+			name:      "position 4",
+			pos:       0,
+			want:      0,
+			wantError: false,
 		},
 		{
-			name: "position 4",
-			pos:  4,
-			want: 4,
+			name:      "position 4",
+			pos:       4,
+			want:      4,
+			wantError: false,
 		},
 		{
-			name: "position 5 over capacity",
-			pos:  5,
-			want: 4,
+			name:      "position 5 over capacity",
+			pos:       5,
+			want:      4,
+			wantError: true,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			bb.Position(test.pos)
+			err := bb.SetPosition(test.pos)
+			if test.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 			assert.True(t, bb.pos == test.want)
 		})
 	}
@@ -42,55 +52,50 @@ func TestSetPosition(t *testing.T) {
 func TestPut(t *testing.T) {
 	bb := New(1024)
 	hello := []byte{'h', 'e', 'l', 'l', 'o'}
-	bb.Put(hello)
 
-	assert.NoError(t, bb.Err())
+	assert.NoError(t, bb.Put(hello))
 }
 
 func TestGet(t *testing.T) {
 	hello := []byte{'h', 'e', 'l', 'l', 'o'}
 	bb := New(1024)
-	bb.Put(hello)
+	require.NoError(t, bb.Put(hello))
 
 	dst := make([]byte, len(hello))
-	bb.Position(0)
-	bb.Get(dst)
+	require.NoError(t, bb.SetPosition(0))
 
+	assert.NoError(t, bb.Get(dst))
 	assert.Equal(t, "hello", string(dst))
 }
 
 func TestPutInt(t *testing.T) {
 	bb := New(1024)
-
-	bb.PutInt(100)
-
-	assert.NoError(t, bb.Err())
+	assert.NoError(t, bb.PutInt(100))
 
 	newBB := New(0)
-	newBB.PutInt(100)
-
-	assert.Error(t, newBB.Err())
+	assert.Error(t, newBB.PutInt(100))
 }
 
 func TestGetInt(t *testing.T) {
 	bb := New(1024)
-	bb.PutInt(100)
-	bb.Position(0)
+	require.NoError(t, bb.PutInt(100))
+	require.NoError(t, bb.SetPosition(0))
 
 	val := bb.GetInt()
-
 	assert.Equal(t, 100, val)
 }
 
 func TestJapanese(t *testing.T) {
 	bb := New(1024)
 	hello := []byte("こんにちわ")
-	bb.Put(hello)
-	bb.Position(0)
+
+	require.NoError(t, bb.Put(hello))
+	require.NoError(t, bb.SetPosition(0))
 
 	dst := make([]byte, len(hello))
-	bb.Get(dst)
+	err := bb.Get(dst)
 
+	assert.NoError(t, err)
 	assert.Equal(t, "こんにちわ", string(dst))
 }
 

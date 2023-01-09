@@ -13,11 +13,11 @@ type StartRecord struct {
 
 func NewStartRecord(p *file.Page) (*StartRecord, error) {
 	tpos := intByteSize
-	txnum := p.GetInt(tpos)
-
-	if err := p.Err(); err != nil {
+	txnum, err := p.GetInt(tpos)
+	if err != nil {
 		return nil, err
 	}
+
 	return &StartRecord{txnum: txnum}, nil
 }
 
@@ -42,11 +42,14 @@ func (sr *StartRecord) String() string {
 func writeStartToLog(lm *logs.LogManager, txnum int) (latestLSN int, err error) {
 	rec := make([]byte, 2*intByteSize)
 	p := file.NewPageWithBuf(rec)
-	p.SetInt(0, Start)
-	p.SetInt(intByteSize, txnum)
 
-	if err := p.Err(); err != nil {
+	if err := p.SetInt(0, Start); err != nil {
 		return 0, err
 	}
+
+	if err := p.SetInt(intByteSize, txnum); err != nil {
+		return 0, err
+	}
+
 	return lm.Append(rec)
 }

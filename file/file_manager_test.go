@@ -49,12 +49,12 @@ func TestFile(t *testing.T) {
 
 	pos1 := 88
 	str := "abcdefghijklm"
-	p1.SetString(pos1, str)
+	require.NoError(t, p1.SetString(pos1, str))
 
 	size := MaxLength(str)
 	pos2 := pos1 + size
 	intVal := 345
-	p1.SetInt(pos2, intVal)
+	require.NoError(t, p1.SetInt(pos2, intVal))
 
 	err = fm.Write(blk, p1)
 	assert.NoError(t, err)
@@ -64,9 +64,11 @@ func TestFile(t *testing.T) {
 	err = fm.Read(blk, p2)
 	assert.NoError(t, err)
 
-	pos1Val := p2.GetString(pos1)
+	pos1Val, err := p2.GetString(pos1)
+	assert.NoError(t, err)
 	assert.Equal(t, str, pos1Val)
 
-	pos2Val := p2.GetInt(pos2)
+	pos2Val, err := p2.GetInt(pos2)
+	assert.NoError(t, err)
 	assert.Equal(t, intVal, pos2Val)
 }
