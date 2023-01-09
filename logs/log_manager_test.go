@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/ksrnnb/go-rdb/file"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func createRecords(t *testing.T, lm *LogManager, start, end int) {
@@ -22,23 +24,17 @@ func createRecords(t *testing.T, lm *LogManager, start, end int) {
 		p := file.NewPageWithBuf(buf)
 		p.SetString(0, s)
 		p.SetInt(npos, 100+i)
-		if err := p.Err(); err != nil {
-			t.Fatalf("SetInt failed, i = %d, err = %v", i, err)
-		}
+		require.NoError(t, p.Err())
 
 		_, err := lm.Append(buf)
-		if err != nil {
-			t.Fatalf("Append failed, i = %d, err = %v", i, err)
-		}
+		require.NoError(t, err)
 	}
 }
 
 func printLogRecords(t *testing.T, lm *LogManager) {
 	t.Helper()
 	li, err := lm.Iterator()
-	if err != nil {
-		t.Fatalf("lm.Iterator() failed, %v", err)
-	}
+	require.NoError(t, err)
 
 	fmt.Printf("\n======== printing... ========\n\n")
 
@@ -53,9 +49,7 @@ func printLogRecords(t *testing.T, lm *LogManager) {
 		npos := file.MaxLength(str)
 		val := page.GetInt(npos)
 
-		if err := page.Err(); err != nil {
-			t.Fatalf("page.GetInt(npos) failed, %v", err)
-		}
+		require.NoError(t, page.Err())
 
 		fmt.Printf("[%s , %d]\n", str, val)
 		fmt.Printf("li.currentPos: %d, blocksize: %d, blk.Number(): %d\n",
@@ -67,9 +61,7 @@ func newLogManager(t *testing.T) *LogManager {
 	fm := newFileManager(t)
 	lm, err := NewLogManager(fm, "tempLogTest")
 
-	if err != nil {
-		t.Fatalf("newLogManager() failed")
-	}
+	require.NoError(t, err)
 
 	return lm
 }
@@ -81,25 +73,23 @@ func TestLogManager(t *testing.T) {
 	// record10 => [4byte(uint32) + page{[4byte(uint32) + 8byte(string)] + 4byte(uint32)}] => 20byte
 	// 8 + 19 * 9 + 20 * 11 => 8 + 171 + 220 = 399 でflush
 	// => 35まではflushが入らないのでlastSavedLSNは24
-	if lm.lastSavedLSN != 20 {
-		t.Errorf("lastSavedLSN should be 20, but given %d", lm.lastSavedLSN)
-	}
+	assert.Equal(t, 20, lm.lastSavedLSN)
 
 	printLogRecords(t, lm)
 
 	createRecords(t, lm, 36, 70)
 	// 8 + 20 * 19 = 388でflush
 	// flushは20 + 19 * nで発生する。最後にflushするのは58
+	assert.Equal(t, 58, lm.lastSavedLSN)
 	if lm.lastSavedLSN != 58 {
 		t.Errorf("lastSavedLSN should be 58, but given %d", lm.lastSavedLSN)
 	}
 
-	lm.Flush(65)
+	err := lm.Flush(65)
+	assert.NoError(t, err)
 
 	printLogRecords(t, lm)
 
 	// flushしたので、最後までディスクに書き込まれる。
-	if lm.lastSavedLSN != 70 {
-		t.Errorf("lastSavedLSN should be 70, but given %d", lm.lastSavedLSN)
-	}
+	assert.Equal(t, 70, lm.lastSavedLSN)
 }

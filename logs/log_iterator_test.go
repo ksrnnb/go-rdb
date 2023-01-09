@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/ksrnnb/go-rdb/file"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const dbDirectory = "./../data"
@@ -15,9 +17,7 @@ func newLogIterator(t *testing.T) *LogIterator {
 	blk := file.NewBlockID("tempLogBlock", 0)
 	li, err := NewLogIterator(fm, blk)
 
-	if err != nil {
-		t.Fatalf("failed to create new log iterator, %v", err)
-	}
+	require.NoError(t, err)
 
 	return li
 }
@@ -26,9 +26,7 @@ func newFileManager(t *testing.T) *file.FileManager {
 	t.Helper()
 	fm, err := file.NewFileManager(dbDirectory, 400)
 
-	if err != nil {
-		t.Fatalf("failed to create file manager, %v", err)
-	}
+	require.NoError(t, err)
 	return fm
 }
 
@@ -41,7 +39,5 @@ func TestIteratesLogIterator(t *testing.T) {
 
 	_, err := li.Next()
 
-	if err != nil {
-		t.Errorf("Next() failed, %v", err)
-	}
+	assert.NoError(t, err)
 }
