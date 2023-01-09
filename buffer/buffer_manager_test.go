@@ -7,6 +7,7 @@ import (
 	. "github.com/ksrnnb/go-rdb/buffer"
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/server"
+	"github.com/stretchr/testify/require"
 )
 
 const filename = "tempTestFile"
@@ -22,13 +23,6 @@ func blockID(t *testing.T, filename string, blkNum int) *file.BlockID {
 	return file.NewBlockID(filename, blkNum)
 }
 
-func expectNoError(t *testing.T, err error) {
-	t.Helper()
-	if err != nil {
-		t.Fatalf("err == nil expected, but %v", err)
-	}
-}
-
 // 接続できないことを確かめるので、10秒かかる
 func TestPin(t *testing.T) {
 	// バッファサイズは3
@@ -38,20 +32,20 @@ func TestPin(t *testing.T) {
 
 	var err error
 	buffers[0], err = bm.Pin(blockID(t, filename, 0))
-	expectNoError(t, err)
+	require.NoError(t, err)
 	buffers[1], err = bm.Pin(blockID(t, filename, 1))
-	expectNoError(t, err)
+	require.NoError(t, err)
 	buffers[2], err = bm.Pin(blockID(t, filename, 2))
-	expectNoError(t, err)
+	require.NoError(t, err)
 
 	bm.Unpin(buffers[1])
 	buffers[1] = nil
 
 	// 0番はpinされたままなので、numAvailableは増えない
 	buffers[3], err = bm.Pin(blockID(t, filename, 0))
-	expectNoError(t, err)
+	require.NoError(t, err)
 	buffers[4], err = bm.Pin(blockID(t, filename, 1))
-	expectNoError(t, err)
+	require.NoError(t, err)
 
 	for i := 0; i < len(buffers); i++ {
 		b := buffers[i]
@@ -73,11 +67,11 @@ func TestCannotPinOverBufferSize(t *testing.T) {
 
 	var err error
 	buffers[0], err = bm.Pin(blockID(t, filename, 0))
-	expectNoError(t, err)
+	require.NoError(t, err)
 	buffers[1], err = bm.Pin(blockID(t, filename, 1))
-	expectNoError(t, err)
+	require.NoError(t, err)
 	buffers[2], err = bm.Pin(blockID(t, filename, 2))
-	expectNoError(t, err)
+	require.NoError(t, err)
 
 	// ここで10秒かかる
 	buffers[5], err = bm.Pin(blockID(t, filename, 3))
