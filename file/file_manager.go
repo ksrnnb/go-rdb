@@ -67,7 +67,11 @@ func (fm *FileManager) Read(blk *BlockID, p *Page) error {
 		return fmt.Errorf("file: Read() failed to get file from BlockID, %w", err)
 	}
 
-	f.Seek(int64(blk.Number()*fm.blockSize), 0)
+	_, err = f.Seek(int64(blk.Number()*fm.blockSize), 0)
+	if err != nil {
+		return err
+	}
+
 	b := make([]byte, fm.blockSize)
 	n, ioErr := f.Read(b)
 
@@ -123,7 +127,11 @@ func (fm *FileManager) Append(filename string) (*BlockID, error) {
 		return nil, err
 	}
 
-	f.Seek(int64(blk.Number()*fm.blockSize), 0)
+	_, err = f.Seek(int64(blk.Number()*fm.blockSize), 0)
+	if err != nil {
+		return nil, err
+	}
+
 	b := make([]byte, fm.blockSize)
 	_, err = f.Write(b)
 	if err != nil {
