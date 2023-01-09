@@ -11,6 +11,8 @@ import (
 	"sync"
 )
 
+// FileManager は特定のブロックの内容をページに読み込んだり、ページの内容をブロックに書き込んだりする
+// ファイルへのアクセスはブロック単位で行う
 type FileManager struct {
 	dbDirectory string
 	blockSize   int
