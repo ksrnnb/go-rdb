@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "github.com/ksrnnb/go-rdb/file"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetBytes(t *testing.T) {
@@ -13,16 +14,10 @@ func TestGetBytes(t *testing.T) {
 	pos := 50
 	page.SetBytes(pos, hello)
 	v := page.GetInt(pos)
-
-	if v != 5 {
-		t.Errorf("page.GetInt(%d) = '%d' want 5", pos, v)
-	}
+	assert.Equal(t, 5, v)
 
 	bv := page.GetBytes(pos)
-
-	if string(bv) != "hello" {
-		t.Errorf("page.GetBytes(%d) = '%s' want 'hello'", pos, bv)
-	}
+	assert.Equal(t, "hello", string(bv))
 }
 
 func TestGetInt(t *testing.T) {
@@ -32,9 +27,7 @@ func TestGetInt(t *testing.T) {
 	page.SetInt(pos, 100)
 	val := page.GetInt(pos)
 
-	if val != 100 {
-		t.Errorf(`val = '%d', want 100`, val)
-	}
+	assert.Equal(t, 100, val)
 }
 
 func TestGetString(t *testing.T) {
@@ -44,9 +37,7 @@ func TestGetString(t *testing.T) {
 	page.SetString(pos, "hello")
 	str := page.GetString(pos)
 
-	if str != "hello" {
-		t.Errorf(`str = '%s', want "hello"`, str)
-	}
+	assert.Equal(t, "hello", str)
 }
 
 func TestMaxLength(t *testing.T) {
@@ -62,9 +53,7 @@ func TestMaxLength(t *testing.T) {
 
 	for name, tt := range cases {
 		t.Run(name, func(t *testing.T) {
-			if MaxLength(tt.str) != tt.expected {
-				t.Errorf("MaxLength(%s) should be %d, but given %d", tt.str, tt.expected, MaxLength(tt.str))
-			}
+			assert.Equal(t, tt.expected, MaxLength(tt.str))
 		})
 	}
 }

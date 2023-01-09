@@ -4,6 +4,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const dbDirectory = "./../data"
@@ -39,9 +42,7 @@ func TestFile(t *testing.T) {
 	bs := 400
 	fm, err := NewFileManager(dbDirectory, bs)
 
-	if err != nil {
-		t.Errorf("TestNewFileManager: file manager cannot be created, %v", err)
-	}
+	require.NoError(t, err)
 
 	blk := NewBlockID("tempTestFile", 2)
 	p1 := NewPage(fm.BlockSize())
@@ -56,26 +57,16 @@ func TestFile(t *testing.T) {
 	p1.SetInt(pos2, intVal)
 
 	err = fm.Write(blk, p1)
-
-	if err != nil {
-		t.Errorf("TestNewFileManager: fm.Write(blk, p1) failed, %v", err)
-	}
+	assert.NoError(t, err)
 
 	// p1からファイルに書き込んだ内容を、p2で読み取る
 	p2 := NewPage(fm.BlockSize())
 	err = fm.Read(blk, p2)
-
-	if err != nil {
-		t.Errorf("TestNewFileManager: fm.Read(blk, p2) failed, %v", err)
-	}
+	assert.NoError(t, err)
 
 	pos1Val := p2.GetString(pos1)
-	if pos1Val != str {
-		t.Errorf("TestNewFileManager: pos1Val = %s, want %s", pos1Val, str)
-	}
+	assert.Equal(t, str, pos1Val)
 
 	pos2Val := p2.GetInt(pos2)
-	if pos2Val != intVal {
-		t.Errorf("TestNewFileManager: pos2Val = %d, want %d", pos2Val, intVal)
-	}
+	assert.Equal(t, intVal, pos2Val)
 }
