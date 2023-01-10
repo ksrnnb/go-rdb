@@ -18,16 +18,25 @@ var errNotExistUnpin = errors.New("unpin buffer doesn't exist")
 type BufferManager struct {
 	bufferPool   []*Buffer
 	numAvailable int
-	mux          sync.Mutex
+	mux          *sync.Mutex
+	cond         *sync.Cond
+}
+
+type pinResult struct {
+	buffer *Buffer
+	err    error
 }
 
 // NewBufferManager()はBufferManagerを返す
 // bufferPoolはnumbuffs個のBufferが初期値となるため、全てunpin状態
 func NewBufferManager(fm *file.FileManager, lm *logs.LogManager, numbuffs int) *BufferManager {
 	bp := make([]*Buffer, numbuffs)
+	mux := &sync.Mutex{}
 	bm := &BufferManager{
 		bufferPool:   bp,
 		numAvailable: numbuffs,
+		mux:          mux,
+		cond:         sync.NewCond(mux),
 	}
 
 	for i := 0; i < numbuffs; i++ {
@@ -68,53 +77,48 @@ func (bm *BufferManager) Unpin(b *Buffer) {
 
 	if !b.IsPinned() {
 		bm.numAvailable++
-
-		// TODO: unpinされたことを通知する
+		bm.cond.Broadcast()
 	}
 }
 
 // Pin()は引数のブロックをpinする
-// 空きがない場合は1秒ごとに再確認（最大10秒）
 // pinできたらBufferを返す
 // ディスクに書き込む可能性のあるメソッドはPin()またはFlushAll()のみ
 func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
+	result := make(chan pinResult)
+	go bm.pin(result, blk)
+
+	select {
+	case <-time.After(maxWatingTime):
+		bm.cond.Broadcast()
+	case pr := <-result:
+		return pr.buffer, pr.err
+	}
+
+	return nil, fmt.Errorf("cannot bin")
+}
+
+func (bm *BufferManager) pin(result chan<- pinResult, blk *file.BlockID) {
 	bm.mux.Lock()
 	defer bm.mux.Unlock()
-	t := time.Now()
+
 	b, err := bm.tryToPin(blk)
 
 	if err != nil {
 		if !errors.Is(err, errNotExistUnpin) {
-			return nil, fmt.Errorf("buffer(): Pin() failed, %w", err)
+			result <- pinResult{nil, fmt.Errorf("buffer(): Pin() failed, %w", err)}
 		}
 	}
 
-	for b == nil && !bm.isWaitingTooLong(t) {
-		// TODO: 他のスレッドでUnpinされるのを待つ
-		// 暫定で1秒ごとにtryする
-		time.Sleep(1 * time.Second)
+	for b == nil {
+		bm.cond.Wait()
 		b, err = bm.tryToPin(blk)
 		if err != nil {
-			if !errors.Is(err, errNotExistUnpin) {
-				return nil, fmt.Errorf("buffer(): Pin() failed, %w", err)
-			}
+			result <- pinResult{nil, fmt.Errorf("buffer(): Pin() failed, %w", err)}
 		}
-
 	}
 
-	if b == nil {
-		// maxTImeMilliSecondを超えてもpinできない場合はエラーを返す
-		return nil, fmt.Errorf("buffer: Pin() failed, time over")
-	}
-
-	return b, nil
-}
-
-// isWaitingTooLong()はmaxTimeを超えてwaitしているかどうかを返す
-func (bm *BufferManager) isWaitingTooLong(start time.Time) bool {
-	limit := start.Add(maxWatingTime)
-
-	return time.Now().After(limit)
+	result <- pinResult{b, nil}
 }
 
 // tryToPin()はbufferPoolからブロックを探す
@@ -159,6 +163,7 @@ func (bm *BufferManager) findExistingBuffer(blk *file.BlockID) *Buffer {
 
 // chooseUnpinnedBuffer()はbufferPoolのうち、
 // unpin状態のものを探して一番初めに見つかったものを返す
+// => Naive strategy を採用
 func (bm *BufferManager) chooseUnpinnedBuffer() (*Buffer, error) {
 	for _, b := range bm.bufferPool {
 		if !b.IsPinned() {

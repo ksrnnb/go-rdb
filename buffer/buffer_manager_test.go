@@ -7,6 +7,7 @@ import (
 	. "github.com/ksrnnb/go-rdb/buffer"
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/server"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +24,6 @@ func blockID(t *testing.T, filename string, blkNum int) *file.BlockID {
 	return file.NewBlockID(filename, blkNum)
 }
 
-// 接続できないことを確かめるので、10秒かかる
 func TestPin(t *testing.T) {
 	// バッファサイズは3
 	bm := newBufferManager(t)
@@ -75,7 +75,5 @@ func TestCannotPinOverBufferSize(t *testing.T) {
 
 	// ここで10秒かかる
 	buffers[5], err = bm.Pin(blockID(t, filename, 3))
-	if err == nil {
-		t.Errorf("bm.Pin() should return error but get nil")
-	}
+	assert.Error(t, err)
 }
