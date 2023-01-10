@@ -6,7 +6,7 @@ import (
 	"github.com/ksrnnb/go-rdb/file"
 )
 
-// LogIteratorはブロックNo.の大きいものから小さいものに向かってiterateする
+// LogIteratorはログレコードの新しいものから古いものに向かってiterateする
 type LogIterator struct {
 	fm         *file.FileManager
 	blk        *file.BlockID

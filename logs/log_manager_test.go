@@ -71,8 +71,8 @@ func TestLogManager(t *testing.T) {
 	createRecords(t, lm, 1, 35)
 	// record1  => [4byte(uint32) + page{[4byte(uint32) + 7byte(string)] + 4byte(uint32)}] => 19byte
 	// record10 => [4byte(uint32) + page{[4byte(uint32) + 8byte(string)] + 4byte(uint32)}] => 20byte
-	// 8 + 19 * 9 + 20 * 11 => 8 + 171 + 220 = 399 でflush
-	// => 35まではflushが入らないのでlastSavedLSNは24
+	// 8 (log file size) + 19 * 9 + 20 * 11 => 8 + 171 + 220 = 399 でflush
+	// => 35まではflushが入らないのでlastSavedLSNは9+11=20
 	assert.Equal(t, 20, lm.lastSavedLSN)
 
 	printLogRecords(t, lm)
@@ -81,9 +81,6 @@ func TestLogManager(t *testing.T) {
 	// 8 + 20 * 19 = 388でflush
 	// flushは20 + 19 * nで発生する。最後にflushするのは58
 	assert.Equal(t, 58, lm.lastSavedLSN)
-	if lm.lastSavedLSN != 58 {
-		t.Errorf("lastSavedLSN should be 58, but given %d", lm.lastSavedLSN)
-	}
 
 	err := lm.Flush(65)
 	assert.NoError(t, err)

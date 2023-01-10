@@ -10,6 +10,20 @@ import (
 
 const intByteSize = bytebuffer.IntByteSize
 
+// boundaryPosition は常に page の先頭 = 0
+const boundaryPosition = 0
+
+// Log Page structure
+// page の末尾からログレコードを書き込むことで、LogIterator が最新のログレコードから読み取ることができるようになる
+// ByteBuffer の仕様上、こうしたほうが便利
+//
+// boundary                                page
+//
+// 0                               position                                size
+// ↓                                 ↓                                      ↓
+// --------------------------------------------------------------------------
+// | boundary position (int32) | ... | record n | ... | record 2 | record 1 |
+// --------------------------------------------------------------------------.
 type LogManager struct {
 	fm           *file.FileManager
 	logFileName  string
@@ -23,7 +37,7 @@ type LogManager struct {
 // NewLogManager()は1ブロックサイズ分のバイトバッファをもつページを1つ確保する
 // 指定したログファイルの大きさが0の場合は、新しくブロックを割り当て
 // 0でない（既に書き込まれている）場合は、ログサイズ分のブロックを生成して、
-// 読み取った内容をページおに書き込む
+// 読み取った内容をページに書き込む
 func NewLogManager(fm *file.FileManager, logFileName string) (*LogManager, error) {
 	lm := &LogManager{
 		fm:          fm,
@@ -58,7 +72,7 @@ func NewLogManager(fm *file.FileManager, logFileName string) (*LogManager, error
 }
 
 // Flush()は、指定したLSNと最後にディスクに書き込んだLSNを比較する
-// 指定したLSNのほうが小さい場合は、既にディスクに書き込まれている必要がある。
+// 指定したLSNのほうが小さい場合は、既にディスクに書き込まれている。
 // それ以外の場合は、ページをディスクに書き込む
 func (lm *LogManager) Flush(lsn int) error {
 	if lsn >= lm.lastSavedLSN {
@@ -81,7 +95,7 @@ func (lm *LogManager) flush() error {
 	return nil
 }
 
-// Append()は、
+// Append は、ログレコードをブロックに追加する
 // ログレコードのサイズを計算して、現在のページに収まるかどうかを判断
 // 収まらない場合は、現在のページをディスクに書き込み、appendNewBlock()を呼ぶ
 // 処理後、LSNを1インクリメントする（latestLSN）
@@ -89,7 +103,7 @@ func (lm *LogManager) Append(logrec []byte) (latestLSN int, err error) {
 	lm.mux.Lock()
 	defer lm.mux.Unlock()
 	// boundaryは前回書き込んだ最後の位置
-	boundary, err := lm.logPage.GetInt(0)
+	boundary, err := lm.getBoundary()
 	if err != nil {
 		return 0, fmt.Errorf("log: Append() failed to get integer, %w", err)
 	}
@@ -114,9 +128,8 @@ func (lm *LogManager) Append(logrec []byte) (latestLSN int, err error) {
 			return 0, fmt.Errorf("log: Append() failed to append block, %w", err)
 		}
 
-		// appendNewBlock()を実行した後は、ページは新しい空のページとなる。
-		// 先頭にブロックサイズが格納されている。
-		boundary, err = lm.logPage.GetInt(0)
+		// appendNewBlock()を実行した後は、ページは新しい空のページとなるので、boundary を改めて取得する
+		boundary, err = lm.getBoundary()
 		if err != nil {
 			return 0, fmt.Errorf("log: Append() failed to get int, %w", err)
 		}
@@ -126,8 +139,8 @@ func (lm *LogManager) Append(logrec []byte) (latestLSN int, err error) {
 	recPos := boundary - bytesNeeded
 	lm.logPage.SetBytes(recPos, logrec)
 
-	// 最後に書き込んだレコードの位置をページの先頭に記録。毎回更新する
-	err = lm.logPage.SetInt(0, recPos)
+	// 最後に書き込んだレコードの位置を更新する
+	err = lm.setBoundary(recPos)
 	if err != nil {
 		return 0, fmt.Errorf("log: Append() failed to set int, %w", err)
 	}
@@ -148,7 +161,7 @@ func (lm *LogManager) appendNewBlock() (*file.BlockID, error) {
 	}
 
 	// boundary を末尾に設定
-	err = lm.logPage.SetInt(0, lm.fm.BlockSize())
+	err = lm.setBoundary(lm.fm.BlockSize())
 	if err != nil {
 		return nil, fmt.Errorf("log: appendNewBlock() cannot set integer to lm.logPage, %w", err)
 	}
@@ -170,4 +183,14 @@ func (lm *LogManager) Iterator() (*LogIterator, error) {
 		return nil, fmt.Errorf("log: iterator() cannot flush, %w", err)
 	}
 	return NewLogIterator(lm.fm, lm.currentBlk)
+}
+
+// boundary の値を取得する
+func (lm *LogManager) getBoundary() (int, error) {
+	return lm.logPage.GetInt(boundaryPosition)
+}
+
+// boundary の値を設定する
+func (lm *LogManager) setBoundary(val int) error {
+	return lm.logPage.SetInt(boundaryPosition, val)
 }
