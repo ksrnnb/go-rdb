@@ -99,6 +99,34 @@ func (tx *Transaction) GetInt(blk *file.BlockID, offset int) (int, error) {
 	return val, nil
 }
 
+func (tx *Transaction) SetInt(blk *file.BlockID, offset int, val int, okToLog bool) error {
+	err := tx.cm.XLock(blk)
+	if err != nil {
+		return err
+	}
+
+	txBuf, err := tx.bl.getTxBuffer(blk)
+	if err != nil {
+		return err
+	}
+
+	lsn := -1
+	if okToLog {
+		lsn, err = tx.rm.SetInt(txBuf.buf, offset)
+		if err != nil {
+			return err
+		}
+	}
+	p := txBuf.buf.Contents()
+	err = p.SetInt(offset, val)
+	if err != nil {
+		return err
+	}
+
+	txBuf.buf.SetModified(tx.txNum, lsn)
+	return nil
+}
+
 func (tx *Transaction) GetString(blk *file.BlockID, offset int) (string, error) {
 	err := tx.cm.SLock(blk)
 	if err != nil {
@@ -132,41 +160,13 @@ func (tx *Transaction) SetString(blk *file.BlockID, offset int, val string, okTo
 
 	lsn := -1
 	if okToLog {
-		lsn, err = tx.rm.SetString(txBuf.buf, offset, val)
+		lsn, err = tx.rm.SetString(txBuf.buf, offset)
 		if err != nil {
 			return err
 		}
 	}
 	p := txBuf.buf.Contents()
 	err = p.SetString(offset, val)
-	if err != nil {
-		return err
-	}
-
-	txBuf.buf.SetModified(tx.txNum, lsn)
-	return nil
-}
-
-func (tx *Transaction) SetInt(blk *file.BlockID, offset int, val int, okToLog bool) error {
-	err := tx.cm.XLock(blk)
-	if err != nil {
-		return err
-	}
-
-	txBuf, err := tx.bl.getTxBuffer(blk)
-	if err != nil {
-		return err
-	}
-
-	lsn := -1
-	if okToLog {
-		lsn, err = tx.rm.SetInt(txBuf.buf, offset, val)
-		if err != nil {
-			return err
-		}
-	}
-	p := txBuf.buf.Contents()
-	err = p.SetInt(offset, val)
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,8 @@ import (
 	"github.com/ksrnnb/go-rdb/logs"
 )
 
+// TODO: transaction も recovery manager をもつようになっているので修正したい
+// recovery manager 自体いらないかも。transaction に持たせるのもあり？
 type RecoveryManager struct {
 	lm    *logs.LogManager
 	bm    *buffer.BufferManager
@@ -87,8 +89,8 @@ func (rm *RecoveryManager) Recover() error {
 	return rm.lm.Flush(lsn)
 }
 
-// TODO: newValは使わないのか？
-func (rm *RecoveryManager) SetInt(buf *buffer.Buffer, offset, newVal int) (latestLSN int, err error) {
+// Undo-only recovery を採用しているので、新しい値を書き込む必要はない
+func (rm *RecoveryManager) SetInt(buf *buffer.Buffer, offset int) (latestLSN int, err error) {
 	p := buf.Contents()
 
 	oldVal, err := p.GetInt(offset)
@@ -101,7 +103,7 @@ func (rm *RecoveryManager) SetInt(buf *buffer.Buffer, offset, newVal int) (lates
 	return writeSetIntToLog(rm.lm, rm.txnum, blk, offset, oldVal)
 }
 
-func (rm *RecoveryManager) SetString(buf *buffer.Buffer, offset int, newVal string) (latestLSN int, err error) {
+func (rm *RecoveryManager) SetString(buf *buffer.Buffer, offset int) (latestLSN int, err error) {
 	p := buf.Contents()
 
 	oldVal, err := p.GetString(offset)
