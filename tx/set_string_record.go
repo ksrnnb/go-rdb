@@ -1,7 +1,7 @@
 package tx
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/ksrnnb/go-rdb/bytebuffer"
 	"github.com/ksrnnb/go-rdb/file"
@@ -17,8 +17,7 @@ func getIntByteSize() int {
 type SetStringRecord struct {
 	txnum  int
 	offset int
-	oldVal string
-	newVal string
+	val    string
 	blk    *file.BlockID
 }
 
@@ -52,14 +51,9 @@ func NewSetStringRecord(p *file.Page) (*SetStringRecord, error) {
 		return nil, err
 	}
 
-	oldValPos := opos + intByteSize
-	ssr.oldVal, err = p.GetString(oldValPos)
-	if err != nil {
-		return nil, err
-	}
+	vpos := opos + intByteSize
+	ssr.val, err = p.GetString(vpos)
 
-	newValPos := opos + intByteSize
-	ssr.oldVal, err = p.GetString(newValPos)
 	if err != nil {
 		return nil, err
 	}
@@ -80,22 +74,22 @@ func (ssr *SetStringRecord) TxNumber() int {
 // Undo() undoes the operation encoded by this log record
 func (ssr *SetStringRecord) Undo(tx *Transaction) {
 	tx.Pin(ssr.blk)
-	tx.SetString(ssr.blk, ssr.offset, ssr.oldVal, false)
+	tx.SetString(ssr.blk, ssr.offset, ssr.val, false)
 	tx.Unpin(ssr.blk)
 }
 
 func (ssr *SetStringRecord) String() string {
-	return fmt.Sprintf("<SETSTRING %d %s %d %s %s>", ssr.txnum, ssr.blk.String(), ssr.offset, ssr.oldVal, ssr.newVal)
+	return "<SETSTRING " + strconv.Itoa(ssr.txnum) + " " + ssr.blk.String() +
+		" " + strconv.Itoa(ssr.offset) + " " + ssr.val + ">"
 }
 
-func writeSetStringToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offset int, oldVal string, newVal string) (latestLSN int, err error) {
+func writeSetStringToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offset int, val string) (latestLSN int, err error) {
 	tpos := intByteSize
 	fpos := tpos + intByteSize
 	bpos := fpos + file.MaxLength(blk.FileName())
 	opos := bpos + intByteSize
-	oldValPos := opos + intByteSize
-	newValPos := oldValPos + file.MaxLength(oldVal)
-	recLen := newValPos + file.MaxLength(newVal)
+	vpos := opos + intByteSize
+	recLen := vpos + file.MaxLength(val)
 
 	rec := make([]byte, recLen)
 	p := file.NewPageWithBuf(rec)
@@ -120,11 +114,7 @@ func writeSetStringToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offs
 		return 0, err
 	}
 
-	if err := p.SetString(oldValPos, oldVal); err != nil {
-		return 0, err
-	}
-
-	if err := p.SetString(newValPos, newVal); err != nil {
+	if err := p.SetString(vpos, val); err != nil {
 		return 0, err
 	}
 

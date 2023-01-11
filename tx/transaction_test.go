@@ -30,7 +30,6 @@ func TestTransaction(t *testing.T) {
 	intVal, err := tx2.GetInt(blk, 80)
 	require.NoError(t, err)
 	assert.Equal(t, 1, intVal, "get int value")
-
 	strVal, err := tx2.GetString(blk, 40)
 	require.NoError(t, err)
 	assert.Equal(t, "one", strVal, "get string value")
@@ -48,7 +47,6 @@ func TestTransaction(t *testing.T) {
 	intVal, err = tx3.GetInt(blk, 80)
 	require.NoError(t, err)
 	assert.Equal(t, 2, intVal, "get int value")
-
 	strVal, err = tx3.GetString(blk, 40)
 	require.NoError(t, err)
 	assert.Equal(t, "one!", strVal, "get string value")
@@ -59,7 +57,6 @@ func TestTransaction(t *testing.T) {
 	assert.Equal(t, 9999, intVal, "get int value")
 	require.NoError(t, tx3.Rollback())
 
-	// ロールバック後、値が反映されていないことを確認する
 	tx4, err := NewTransaction(fm, lm, bm)
 	require.NoError(t, err)
 	require.NoError(t, tx4.Pin(blk))

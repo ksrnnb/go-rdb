@@ -1,7 +1,7 @@
 package tx
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/logs"
@@ -10,8 +10,7 @@ import (
 type SetIntRecord struct {
 	txnum  int
 	offset int
-	oldVal int
-	newVal int
+	val    int
 	blk    *file.BlockID
 }
 
@@ -45,13 +44,8 @@ func NewSetIntRecord(p *file.Page) (*SetIntRecord, error) {
 		return nil, err
 	}
 
-	oldValPos := opos + intByteSize
-	sir.oldVal, err = p.GetInt(oldValPos)
-	if err != nil {
-		return nil, err
-	}
-	newValPos := opos + intByteSize
-	sir.newVal, err = p.GetInt(newValPos)
+	vpos := opos + intByteSize
+	sir.val, err = p.GetInt(vpos)
 	if err != nil {
 		return nil, err
 	}
@@ -72,22 +66,22 @@ func (sir *SetIntRecord) TxNumber() int {
 // Undo() undoes the operation encoded by this log record
 func (sir *SetIntRecord) Undo(tx *Transaction) {
 	tx.Pin(sir.blk)
-	tx.SetInt(sir.blk, sir.offset, sir.oldVal, false)
+	tx.SetInt(sir.blk, sir.offset, sir.val, false)
 	tx.Unpin(sir.blk)
 }
 
 func (sir *SetIntRecord) String() string {
-	return fmt.Sprintf("<SETINT %d %s %d %d %d>", sir.txnum, sir.blk.String(), sir.offset, sir.oldVal, sir.newVal)
+	return "<SETINT " + strconv.Itoa(sir.txnum) + " " + sir.blk.String() +
+		" " + strconv.Itoa(sir.offset) + " " + strconv.Itoa(sir.val) + ">"
 }
 
-func writeSetIntToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offset int, oldVal int, newVal int) (latestLSN int, err error) {
+func writeSetIntToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offset int, val int) (latestLSN int, err error) {
 	tpos := intByteSize
 	fpos := tpos + intByteSize
 	bpos := fpos + file.MaxLength(blk.FileName())
 	opos := bpos + intByteSize
-	oldValPos := opos + intByteSize
-	newValPos := oldValPos + oldValPos
-	resSize := newValPos + intByteSize
+	vpos := opos + intByteSize
+	resSize := vpos + intByteSize
 
 	rec := make([]byte, resSize)
 	p := file.NewPageWithBuf(rec)
@@ -112,11 +106,7 @@ func writeSetIntToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offset 
 		return 0, err
 	}
 
-	if err := p.SetInt(oldValPos, oldVal); err != nil {
-		return 0, err
-	}
-
-	if err := p.SetInt(newValPos, newVal); err != nil {
+	if err := p.SetInt(vpos, val); err != nil {
 		return 0, err
 	}
 
