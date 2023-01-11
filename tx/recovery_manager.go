@@ -5,6 +5,7 @@ import (
 	"github.com/ksrnnb/go-rdb/logs"
 )
 
+// Undo-Only Recovery を採用
 type RecoveryManager struct {
 	lm    *logs.LogManager
 	bm    *buffer.BufferManager
@@ -29,6 +30,7 @@ func NewRecoveryManager(tx *Transaction, txnum int, lm *logs.LogManager, bm *buf
 	return rm, nil
 }
 
+// ログレコード書き込み前にトランザクションのバッファをフラッシュする
 func (rm *RecoveryManager) Commit() error {
 	err := rm.bm.FlushAll(rm.txnum)
 
@@ -45,6 +47,7 @@ func (rm *RecoveryManager) Commit() error {
 	return rm.lm.Flush(lsn)
 }
 
+// ログレコード書き込み前にトランザクションのバッファをフラッシュする
 func (rm *RecoveryManager) Rollback() error {
 	err := rm.doRollBack()
 	if err != nil {
@@ -87,7 +90,6 @@ func (rm *RecoveryManager) Recover() error {
 	return rm.lm.Flush(lsn)
 }
 
-// TODO: newValは使わないのか？
 func (rm *RecoveryManager) SetInt(buf *buffer.Buffer, offset, newVal int) (latestLSN int, err error) {
 	p := buf.Contents()
 
@@ -98,7 +100,7 @@ func (rm *RecoveryManager) SetInt(buf *buffer.Buffer, offset, newVal int) (lates
 	}
 
 	blk := buf.Block()
-	return writeSetIntToLog(rm.lm, rm.txnum, blk, offset, oldVal)
+	return writeSetIntToLog(rm.lm, rm.txnum, blk, offset, oldVal, newVal)
 }
 
 func (rm *RecoveryManager) SetString(buf *buffer.Buffer, offset int, newVal string) (latestLSN int, err error) {
@@ -111,7 +113,7 @@ func (rm *RecoveryManager) SetString(buf *buffer.Buffer, offset int, newVal stri
 	}
 
 	blk := buf.Block()
-	return writeSetStringToLog(rm.lm, rm.txnum, blk, offset, oldVal)
+	return writeSetStringToLog(rm.lm, rm.txnum, blk, offset, oldVal, newVal)
 }
 
 func (rm *RecoveryManager) doRollBack() error {
