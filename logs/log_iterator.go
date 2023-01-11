@@ -7,6 +7,7 @@ import (
 )
 
 // LogIteratorはログレコードの新しいものから古いものに向かってiterateする
+// 探すログレコードは末尾の方にある可能性が高いため、末尾から読む方が効率的
 type LogIterator struct {
 	fm         *file.FileManager
 	blk        *file.BlockID
