@@ -11,6 +11,7 @@ import (
 	"github.com/ksrnnb/go-rdb/logs"
 	myTesting "github.com/ksrnnb/go-rdb/testing"
 	"github.com/ksrnnb/go-rdb/tx"
+	"github.com/ksrnnb/go-rdb/tx/concurrency"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,11 +21,12 @@ func TestConcurrency(t *testing.T) {
 	fm := sdb.FileManager()
 	lm := sdb.LogManager()
 	bm := sdb.BufferManager()
+	lt := concurrency.NewLockTable()
 	tng := tx.NewTransactionNumberGenerator()
 
 	testFunc1 := func(t *testing.T, ch chan<- struct{}, fm *file.FileManager, lm *logs.LogManager, bm *buffer.BufferManager) {
 		defer wg.Done()
-		tx, err := tx.NewTransaction(fm, lm, bm, tng)
+		tx, err := tx.NewTransaction(fm, lm, bm, lt, tng)
 		require.NoError(t, err)
 		blk1 := file.NewBlockID("testfile", 1)
 		blk2 := file.NewBlockID("testfile", 2)
@@ -53,7 +55,7 @@ func TestConcurrency(t *testing.T) {
 	testFunc2 := func(t *testing.T, fm *file.FileManager, lm *logs.LogManager, bm *buffer.BufferManager) {
 		defer wg.Done()
 
-		tx, err := tx.NewTransaction(fm, lm, bm, tng)
+		tx, err := tx.NewTransaction(fm, lm, bm, lt, tng)
 		require.NoError(t, err)
 		blk1 := file.NewBlockID("testfile", 1)
 		blk2 := file.NewBlockID("testfile", 2)
@@ -84,7 +86,7 @@ func TestConcurrency(t *testing.T) {
 
 		// func1 で slock するまで待つ
 		<-ch
-		tx, err := tx.NewTransaction(fm, lm, bm, tng)
+		tx, err := tx.NewTransaction(fm, lm, bm, lt, tng)
 		require.NoError(t, err)
 		blk1 := file.NewBlockID("testfile", 1)
 		blk2 := file.NewBlockID("testfile", 2)

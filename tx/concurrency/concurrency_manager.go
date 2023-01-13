@@ -4,8 +4,6 @@ import (
 	"github.com/ksrnnb/go-rdb/file"
 )
 
-var lockTable *LockTable = NewLockTable()
-
 type LockType int
 
 const (
@@ -19,11 +17,12 @@ type ConcurrencyManagerLock struct {
 }
 
 type ConcurrencyManager struct {
+	lt    *LockTable
 	locks []*ConcurrencyManagerLock
 }
 
-func NewConcurrencyManager() *ConcurrencyManager {
-	return &ConcurrencyManager{}
+func NewConcurrencyManager(lt *LockTable) *ConcurrencyManager {
+	return &ConcurrencyManager{lt: lt}
 }
 
 func (cm *ConcurrencyManager) SLock(blk *file.BlockID) error {
@@ -32,7 +31,7 @@ func (cm *ConcurrencyManager) SLock(blk *file.BlockID) error {
 		return nil
 	}
 
-	err := lockTable.SLock(blk)
+	err := cm.lt.SLock(blk)
 	if err != nil {
 		return err
 	}
@@ -47,7 +46,7 @@ func (cm *ConcurrencyManager) XLock(blk *file.BlockID) error {
 		return nil
 	}
 
-	err := lockTable.XLock(blk)
+	err := cm.lt.XLock(blk)
 	if err != nil {
 		return err
 	}
@@ -58,7 +57,7 @@ func (cm *ConcurrencyManager) XLock(blk *file.BlockID) error {
 
 func (cm *ConcurrencyManager) Release() {
 	for _, lock := range cm.locks {
-		lockTable.Unlock(lock.blk)
+		cm.lt.Unlock(lock.blk)
 	}
 
 	cm.locks = nil

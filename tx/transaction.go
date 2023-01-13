@@ -18,22 +18,20 @@ type Transaction struct {
 	txNum int
 }
 
-func NewTransaction(fm *file.FileManager, lm *logs.LogManager, bm *buffer.BufferManager, tng *TransactionNumberGenerator) (*Transaction, error) {
+func NewTransaction(fm *file.FileManager, lm *logs.LogManager, bm *buffer.BufferManager, lt *concurrency.LockTable, tng *TransactionNumberGenerator) (*Transaction, error) {
 	tx := &Transaction{
 		fm:    fm,
 		bm:    bm,
+		cm:    concurrency.NewConcurrencyManager(lt),
+		bl:    NewBufferList(bm),
 		txNum: tng.nextTxNumber(),
 	}
 
 	var err error
 	tx.rm, err = NewRecoveryManager(tx, tx.txNum, lm, bm)
-
 	if err != nil {
 		return nil, err
 	}
-
-	tx.cm = concurrency.NewConcurrencyManager()
-	tx.bl = NewBufferList(bm)
 
 	return tx, nil
 }
