@@ -7,8 +7,6 @@ import (
 	"github.com/ksrnnb/go-rdb/tx/concurrency"
 )
 
-var nextTxNum int
-
 const endOfFile = -1
 
 type Transaction struct {
@@ -20,11 +18,11 @@ type Transaction struct {
 	txNum int
 }
 
-func NewTransaction(fm *file.FileManager, lm *logs.LogManager, bm *buffer.BufferManager) (*Transaction, error) {
+func NewTransaction(fm *file.FileManager, lm *logs.LogManager, bm *buffer.BufferManager, tng *TransactionNumberGenerator) (*Transaction, error) {
 	tx := &Transaction{
 		fm:    fm,
 		bm:    bm,
-		txNum: nextTxNumber(),
+		txNum: tng.nextTxNumber(),
 	}
 
 	var err error
@@ -202,9 +200,4 @@ func (tx *Transaction) BlockSize() int {
 
 func (tx *Transaction) AvailableBuffers() int {
 	return tx.bm.Available()
-}
-
-func nextTxNumber() int {
-	nextTxNum++
-	return nextTxNum
 }
