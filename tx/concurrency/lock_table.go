@@ -23,59 +23,91 @@ type Lock struct {
 }
 
 type LockTable struct {
+	mux   *sync.Mutex
+	cond  *sync.Cond
 	locks []*Lock
-	mux   sync.Mutex
+}
+
+type lockResult struct {
+	err error
 }
 
 func NewLockTable() *LockTable {
-	return &LockTable{}
+	mux := &sync.Mutex{}
+	return &LockTable{
+		mux:  mux,
+		cond: sync.NewCond(mux),
+	}
 }
 
 func (lt *LockTable) SLock(blk *file.BlockID) error {
 	start := time.Now()
 
+	lr := make(chan lockResult)
+	go lt.sLock(lr, blk, start)
+
+	select {
+	case result := <-lr:
+		return result.err
+	case <-time.After(maxWaitingTime):
+		lt.cond.Broadcast()
+	}
+	return ErrLockAbort
+}
+
+func (lt *LockTable) sLock(lr chan<- lockResult, blk *file.BlockID, start time.Time) {
+	lt.mux.Lock()
+
+	defer func() {
+		lt.mux.Unlock()
+	}()
+
 	for lt.hasXLock(blk) && !isWaitingTooLong(start) {
-		// TODO: 修正
-		time.Sleep(10 * time.Millisecond)
+		lt.cond.Wait()
 	}
 
 	if lt.hasXLock(blk) {
-		return ErrLockAbort
+		lr <- lockResult{err: ErrLockAbort}
+		return
 	}
 
-	lt.mux.Lock()
-	defer lt.mux.Unlock()
 	val := lt.getLockVal(blk)
 	lt.setLockVal(blk, val+1)
-
-	return nil
-}
-
-func (lt *LockTable) hasXLock(blk *file.BlockID) bool {
-	return lt.getLockVal(blk) == xLocked
+	lr <- lockResult{}
 }
 
 func (lt *LockTable) XLock(blk *file.BlockID) error {
 	start := time.Now()
-	for lt.hasAnyLocks(blk) && !isWaitingTooLong(start) {
-		// TODO: 修正
-		time.Sleep(10 * time.Millisecond)
+	lr := make(chan lockResult)
+	go lt.xLock(lr, blk, start)
+
+	select {
+	case result := <-lr:
+		return result.err
+	case <-time.After(maxWaitingTime):
+		lt.cond.Broadcast()
 	}
-
-	if lt.hasAnyLocks(blk) {
-		return ErrLockAbort
-	}
-
-	lt.mux.Lock()
-	defer lt.mux.Unlock()
-	lt.setLockVal(blk, xLocked)
-
 	return nil
 }
 
-// > 1 means XLock() assumes that the transaction already has an slock
-func (lt *LockTable) hasAnyLocks(blk *file.BlockID) bool {
-	return lt.getLockVal(blk) != unlocked
+func (lt *LockTable) xLock(lr chan<- lockResult, blk *file.BlockID, start time.Time) {
+	lt.mux.Lock()
+
+	defer func() {
+		lt.mux.Unlock()
+	}()
+
+	for lt.hasOtherSLocks(blk) && !isWaitingTooLong(start) {
+		lt.cond.Wait()
+	}
+
+	if lt.hasOtherSLocks(blk) {
+		lr <- lockResult{err: ErrLockAbort}
+		return
+	}
+
+	lt.setLockVal(blk, xLocked)
+	lr <- lockResult{}
 }
 
 func (lt *LockTable) Unlock(blk *file.BlockID) {
@@ -83,12 +115,22 @@ func (lt *LockTable) Unlock(blk *file.BlockID) {
 	defer lt.mux.Unlock()
 	val := lt.getLockVal(blk)
 
-	if isSLocked(val) {
+	if lt.hasOtherSLocks(blk) {
 		lt.setLockVal(blk, val-1)
 	} else {
+		// slock が1個だけ or xlock の場合
 		lt.deleteLock(blk)
-		// TODO: notifyAll()
+		lt.cond.Broadcast()
 	}
+}
+
+func (lt *LockTable) hasXLock(blk *file.BlockID) bool {
+	return lt.getLockVal(blk) == xLocked
+}
+
+// hasOtherSLocks は、他の concurrency manager も slock しているかどうかを返す
+func (lt *LockTable) hasOtherSLocks(blk *file.BlockID) bool {
+	return lt.getLockVal(blk) > 1
 }
 
 func (lt *LockTable) getLockVal(blk *file.BlockID) int {
@@ -128,9 +170,4 @@ func isWaitingTooLong(start time.Time) bool {
 	limit := start.Add(maxWaitingTime)
 
 	return time.Now().After(limit)
-}
-
-// 1以上の場合は、sLock している数
-func isSLocked(val int) bool {
-	return val >= 1
 }

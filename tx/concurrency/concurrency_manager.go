@@ -41,8 +41,8 @@ func (cm *ConcurrencyManager) SLock(blk *file.BlockID) error {
 }
 
 func (cm *ConcurrencyManager) XLock(blk *file.BlockID) error {
-	// ConcurrencyManager が sLock または xLock を所持している場合は、同じトランザクションなのでそのまま書き込みできる
-	if cm.getConcurrencyManagerLock(blk) != nil {
+	// ConcurrencyManager が xLock を所持している場合は、同じトランザクションなのでそのまま書き込みできる
+	if cm.hasXLock(blk) {
 		return nil
 	}
 
