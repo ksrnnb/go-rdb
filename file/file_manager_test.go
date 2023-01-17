@@ -51,7 +51,7 @@ func TestFile(t *testing.T) {
 	str := "abcdefghijklm"
 	require.NoError(t, p1.SetString(pos1, str))
 
-	size := MaxLength(str)
+	size := MaxLengthInString(str)
 	pos2 := pos1 + size
 	intVal := 345
 	require.NoError(t, p1.SetInt(pos2, intVal))

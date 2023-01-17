@@ -31,7 +31,7 @@ func NewSetIntRecord(p *file.Page) (*SetIntRecord, error) {
 		return nil, err
 	}
 
-	bpos := fpos + file.MaxLength(filename)
+	bpos := fpos + file.MaxLengthInString(filename)
 	blknum, err := p.GetInt(bpos)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (sir *SetIntRecord) String() string {
 func writeSetIntToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offset int, val int) (latestLSN int, err error) {
 	tpos := intByteSize
 	fpos := tpos + intByteSize
-	bpos := fpos + file.MaxLength(blk.FileName())
+	bpos := fpos + file.MaxLengthInString(blk.FileName())
 	opos := bpos + intByteSize
 	vpos := opos + intByteSize
 	resSize := vpos + intByteSize

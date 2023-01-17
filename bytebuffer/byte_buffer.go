@@ -3,10 +3,13 @@ package bytebuffer
 import (
 	"encoding/binary"
 	"fmt"
+	"unicode/utf8"
 )
 
 // 整数を入れるときはuint32
 const IntByteSize = 4
+
+const CharsetMaxSize = utf8.UTFMax
 
 type ByteBuffer struct {
 	buf []byte // contents are the bytes buf[off : len(buf)]
@@ -152,7 +155,6 @@ func endian() binary.ByteOrder {
 }
 
 // 与えられた文字長の文字列がとりうる最大の容量を返す
-func MaxLength(str string) int {
-	// Goのlenは引数が何バイトか返してくれる
-	return IntByteSize + len(str)
+func MaxLength(strlen int) int {
+	return IntByteSize + strlen*CharsetMaxSize
 }

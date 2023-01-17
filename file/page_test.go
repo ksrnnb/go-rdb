@@ -50,15 +50,15 @@ func TestMaxLength(t *testing.T) {
 		str      string
 		expected int
 	}{
-		"alphabet": {"abcd", 8},
-		"number":   {"123", 7},
-		"japanese": {"あいうえお", 19},
-		"mix":      {"abc123あいうえお", 25},
+		"alphabet": {"abcd", 20},
+		"number":   {"123", 16},
+		"japanese": {"あいうえお", 24},
+		"mix":      {"abc123あいうえお", 48},
 	}
 
 	for name, tt := range cases {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, MaxLength(tt.str))
+			assert.Equal(t, tt.expected, MaxLengthInString(tt.str))
 		})
 	}
 }

@@ -38,7 +38,7 @@ func NewSetStringRecord(p *file.Page) (*SetStringRecord, error) {
 		return nil, err
 	}
 
-	bpos := fpos + file.MaxLength(filename)
+	bpos := fpos + file.MaxLengthInString(filename)
 	blknum, err := p.GetInt(bpos)
 	if err != nil {
 		return nil, err
@@ -86,10 +86,10 @@ func (ssr *SetStringRecord) String() string {
 func writeSetStringToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offset int, val string) (latestLSN int, err error) {
 	tpos := intByteSize
 	fpos := tpos + intByteSize
-	bpos := fpos + file.MaxLength(blk.FileName())
+	bpos := fpos + file.MaxLengthInString(blk.FileName())
 	opos := bpos + intByteSize
 	vpos := opos + intByteSize
-	recLen := vpos + file.MaxLength(val)
+	recLen := vpos + file.MaxLengthInString(val)
 
 	rec := make([]byte, recLen)
 	p := file.NewPageWithBuf(rec)

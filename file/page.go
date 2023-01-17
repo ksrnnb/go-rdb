@@ -1,6 +1,8 @@
 package file
 
 import (
+	"unicode/utf8"
+
 	"github.com/ksrnnb/go-rdb/bytebuffer"
 )
 
@@ -100,6 +102,11 @@ func (p *Page) Position() int {
 }
 
 // 文字列の長さから、バッファに格納するのに必要なサイズを返す
-func MaxLength(str string) int {
-	return bytebuffer.MaxLength(str)
+func MaxLength(strlen int) int {
+	return bytebuffer.MaxLength(strlen)
+}
+
+// 文字列から、バッファに格納するのに必要なサイズを返す
+func MaxLengthInString(str string) int {
+	return MaxLength(utf8.RuneCountInString(str))
 }

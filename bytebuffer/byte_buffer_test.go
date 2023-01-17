@@ -2,6 +2,7 @@ package bytebuffer
 
 import (
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -104,15 +105,15 @@ func TestMaxByte(t *testing.T) {
 		str string
 		len int
 	}{
-		"alphabet":                 {"abcd", 8},
-		"number":                   {"123456", 10},
-		"japanese":                 {"あいうえお", 19},
-		"alphabet number japanese": {"abc123あいう", 19},
+		"alphabet":                 {"abcd", 20},
+		"number":                   {"123456", 28},
+		"japanese":                 {"あいうえお", 24},
+		"alphabet number japanese": {"abc123あいう", 40},
 	}
 
 	for name, tt := range cases {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, tt.len, MaxLength(tt.str))
+			assert.Equal(t, tt.len, MaxLength(utf8.RuneCountInString(tt.str)))
 		})
 	}
 }

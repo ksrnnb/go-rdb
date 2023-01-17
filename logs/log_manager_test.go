@@ -2,7 +2,6 @@ package logs
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/ksrnnb/go-rdb/file"
@@ -14,8 +13,8 @@ func createRecords(t *testing.T, lm *LogManager, start, end int) {
 	t.Helper()
 
 	for i := start; i <= end; i++ {
-		s := "record" + strconv.Itoa(i)
-		npos := file.MaxLength(s)
+		s := fmt.Sprintf("record%d", i)
+		npos := file.MaxLengthInString(s)
 
 		// 文字列長（整数）, 文字列, 番号（整数）の順にページに書き込む
 		// MaxLength分に加えて、整数1個分の空き容量
@@ -47,7 +46,7 @@ func printLogRecords(t *testing.T, lm *LogManager) {
 		str, err := page.GetString(0)
 		require.NoError(t, err)
 
-		npos := file.MaxLength(str)
+		npos := file.MaxLengthInString(str)
 		val, err := page.GetInt(npos)
 		require.NoError(t, err)
 
@@ -68,25 +67,23 @@ func newLogManager(t *testing.T) *LogManager {
 
 func TestLogManager(t *testing.T) {
 	lm := newLogManager(t)
-	createRecords(t, lm, 1, 35)
-	// record1  => [4byte(uint32) + page{[4byte(uint32) + 7byte(string)] + 4byte(uint32)}] => 19byte
-	// record10 => [4byte(uint32) + page{[4byte(uint32) + 8byte(string)] + 4byte(uint32)}] => 20byte
-	// 8 (log file size) + 19 * 9 + 20 * 11 => 8 + 171 + 220 = 399 でflush
-	// => 35まではflushが入らないのでlastSavedLSNは9+11=20
-	assert.Equal(t, 20, lm.lastSavedLSN)
+	createRecords(t, lm, 1, 10)
+	// record1  => [4byte(uint32) + page{[4byte(uint32) + 28byte(string)] + 4byte(uint32)}] => 40byte
+	// record10 => [4byte(uint32) + page{[4byte(uint32) + 32byte(string)] + 4byte(uint32)}] => 44byte
+	// 4 (boundary) + 40 * 9 => 4 + 360 = 364 で1回flush
+	assert.Equal(t, 9, lm.lastSavedLSN)
 
 	printLogRecords(t, lm)
 
-	createRecords(t, lm, 36, 70)
-	// 8 + 20 * 19 = 388でflush
-	// flushは20 + 19 * nで発生する。最後にflushするのは58
-	assert.Equal(t, 58, lm.lastSavedLSN)
+	createRecords(t, lm, 11, 20)
+	// 4 + 44 * 9 = 4 + 396 = 400 でflush
+	assert.Equal(t, 18, lm.lastSavedLSN)
 
-	err := lm.Flush(65)
+	err := lm.Flush(20)
 	assert.NoError(t, err)
 
 	printLogRecords(t, lm)
 
 	// flushしたので、最後までディスクに書き込まれる。
-	assert.Equal(t, 70, lm.lastSavedLSN)
+	assert.Equal(t, 20, lm.lastSavedLSN)
 }
