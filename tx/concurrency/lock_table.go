@@ -79,6 +79,8 @@ func (lt *LockTable) sLock(lr chan<- lockResult, blk *file.BlockID, start time.T
 func (lt *LockTable) XLock(blk *file.BlockID) error {
 	start := time.Now()
 	lr := make(chan lockResult)
+	defer close(lr)
+
 	go lt.xLock(lr, blk, start)
 
 	select {

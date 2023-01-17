@@ -86,6 +86,8 @@ func (bm *BufferManager) Unpin(b *Buffer) {
 // ディスクに書き込む可能性のあるメソッドはPin()またはFlushAll()のみ
 func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
 	result := make(chan pinResult)
+	defer close(result)
+
 	go bm.pin(result, blk)
 
 	select {
