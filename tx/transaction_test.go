@@ -1,10 +1,11 @@
-package tx
+package tx_test
 
 import (
 	"testing"
 
 	"github.com/ksrnnb/go-rdb/file"
 	myTesting "github.com/ksrnnb/go-rdb/testing"
+	"github.com/ksrnnb/go-rdb/tx"
 	"github.com/ksrnnb/go-rdb/tx/concurrency"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,9 +17,9 @@ func TestTransaction(t *testing.T) {
 	lm := sdb.LogManager()
 	bm := sdb.BufferManager()
 	lt := concurrency.NewLockTable()
-	tng := NewTransactionNumberGenerator()
+	tng := tx.NewTransactionNumberGenerator()
 
-	tx1, err := NewTransaction(fm, lm, bm, lt, tng)
+	tx1, err := tx.NewTransaction(fm, lm, bm, lt, tng)
 	require.NoError(t, err)
 
 	blk := file.NewBlockID("testfile", 1)
@@ -27,7 +28,7 @@ func TestTransaction(t *testing.T) {
 	require.NoError(t, tx1.SetString(blk, 40, "one", false))
 	require.NoError(t, tx1.Commit())
 
-	tx2, err := NewTransaction(fm, lm, bm, lt, tng)
+	tx2, err := tx.NewTransaction(fm, lm, bm, lt, tng)
 	require.NoError(t, err)
 	require.NoError(t, tx2.Pin(blk))
 	intVal, err := tx2.GetInt(blk, 80)
@@ -44,7 +45,7 @@ func TestTransaction(t *testing.T) {
 	require.NoError(t, tx2.SetString(blk, 40, newStrVal, true))
 	require.NoError(t, tx2.Commit())
 
-	tx3, err := NewTransaction(fm, lm, bm, lt, tng)
+	tx3, err := tx.NewTransaction(fm, lm, bm, lt, tng)
 	require.NoError(t, err)
 	require.NoError(t, tx3.Pin(blk))
 	intVal, err = tx3.GetInt(blk, 80)
@@ -60,7 +61,7 @@ func TestTransaction(t *testing.T) {
 	assert.Equal(t, 9999, intVal, "get int value")
 	require.NoError(t, tx3.Rollback())
 
-	tx4, err := NewTransaction(fm, lm, bm, lt, tng)
+	tx4, err := tx.NewTransaction(fm, lm, bm, lt, tng)
 	require.NoError(t, err)
 	require.NoError(t, tx4.Pin(blk))
 	intVal, err = tx4.GetInt(blk, 80)

@@ -181,15 +181,14 @@ func (tx *Transaction) Size(filename string) (int, error) {
 	return tx.fm.Length(filename)
 }
 
-func (tx *Transaction) Append(filename string) error {
+func (tx *Transaction) Append(filename string) (*file.BlockID, error) {
 	blk := file.NewBlockID(filename, endOfFile)
 	err := tx.cm.XLock(blk)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = tx.fm.Append(filename)
-	return err
+	return tx.fm.Append(filename)
 }
 
 func (tx *Transaction) BlockSize() int {
