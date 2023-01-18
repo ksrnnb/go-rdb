@@ -67,8 +67,8 @@ func (rp *RecordPage) SetString(slot int, fieldName string, val string) error {
 }
 
 // Delete はレコードのフラグを Empty にする
-func (rp *RecordPage) Delete(slot int) {
-	rp.setFlag(slot, Empty)
+func (rp *RecordPage) Delete(slot int) error {
+	return rp.setFlag(slot, Empty)
 }
 
 // Format はページ内の全てのレコードスロットをデフォルト値にする

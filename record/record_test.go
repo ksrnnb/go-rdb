@@ -43,8 +43,11 @@ func TestRecordPage(t *testing.T) {
 
 	for slot >= 0 {
 		n := rand.Intn(50)
-		rp.SetInt(slot, "A", n)
-		rp.SetString(slot, "B", fmt.Sprintf("rec%d", n))
+		err := rp.SetInt(slot, "A", n)
+		require.NoError(t, err)
+		err = rp.SetString(slot, "B", fmt.Sprintf("rec%d", n))
+		require.NoError(t, err)
+
 		fmt.Printf("inserting into slot %d: {%d, rec%d}\n", slot, n, n)
 		slot, err = rp.InsertAfter(slot)
 		require.NoError(t, err)
@@ -63,7 +66,8 @@ func TestRecordPage(t *testing.T) {
 		if a < 25 {
 			count++
 			fmt.Printf("deleting slot %d: {%d, %s}\n", slot, a, b)
-			rp.Delete(slot)
+			err = rp.Delete(slot)
+			require.NoError(t, err)
 		}
 		slot, err = rp.NextAfter(slot)
 		require.NoError(t, err)
