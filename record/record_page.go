@@ -1,14 +1,11 @@
 package record
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/tx"
 )
-
-var ErrRecordNotFound = errors.New("record is not found")
 
 type RecordFlag uint8
 
@@ -156,8 +153,7 @@ func (rp *RecordPage) searchAfter(slot int, flag RecordFlag) (int, error) {
 		slot++
 	}
 
-	// TODO: テキスト通りに -1 を返した方がいい？？
-	return 0, ErrRecordNotFound
+	return -1, nil
 }
 
 func (rp *RecordPage) isValidSlot(slot int) bool {

@@ -32,7 +32,7 @@ type Schema struct {
 }
 
 func NewSchema() *Schema {
-	return &Schema{}
+	return &Schema{fieldInfo: make(map[string]*FieldInfo)}
 }
 
 func (s *Schema) AddIntField(fieldName string) {
