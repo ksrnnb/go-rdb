@@ -9,12 +9,16 @@ import (
 	"github.com/ksrnnb/go-rdb/buffer"
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/logs"
+	"github.com/ksrnnb/go-rdb/tx"
+	"github.com/ksrnnb/go-rdb/tx/concurrency"
 )
 
 type SimpleDB struct {
-	fm *file.FileManager
-	lm *logs.LogManager
-	bm *buffer.BufferManager
+	fm  *file.FileManager
+	lm  *logs.LogManager
+	bm  *buffer.BufferManager
+	lt  *concurrency.LockTable
+	tng *tx.TransactionNumberGenerator
 }
 
 const blockSize = 400
@@ -42,9 +46,11 @@ func NewSimpleDB(dirname string, blockSize, bufferSize int) *SimpleDB {
 	bm := buffer.NewBufferManager(fm, lm, bufferSize)
 
 	return &SimpleDB{
-		fm: fm,
-		lm: lm,
-		bm: bm,
+		fm:  fm,
+		lm:  lm,
+		bm:  bm,
+		lt:  concurrency.NewLockTable(),
+		tng: tx.NewTransactionNumberGenerator(),
 	}
 }
 
@@ -58,6 +64,10 @@ func (db *SimpleDB) LogManager() *logs.LogManager {
 
 func (db *SimpleDB) BufferManager() *buffer.BufferManager {
 	return db.bm
+}
+
+func (db *SimpleDB) NewTransaction() (*tx.Transaction, error) {
+	return tx.NewTransaction(db.fm, db.lm, db.bm, db.lt, db.tng)
 }
 
 // createDirectoryIfNeeded()はディレクトリ名を引数にとり、
