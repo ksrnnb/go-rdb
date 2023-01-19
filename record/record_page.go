@@ -85,7 +85,7 @@ func (rp *RecordPage) Format() error {
 			}
 
 			fieldPos := rp.offset(slot) + ofs
-			fieldType, err := schema.fieldType(fn)
+			fieldType, err := schema.FieldType(fn)
 			if err != nil {
 				return err
 			}

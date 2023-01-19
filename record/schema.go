@@ -16,6 +16,10 @@ const (
 	String
 )
 
+func (ft FieldType) AsInt() int {
+	return int(ft)
+}
+
 type FieldInfo struct {
 	fieldType FieldType
 	length    int
@@ -35,26 +39,31 @@ func NewSchema() *Schema {
 	return &Schema{fieldInfo: make(map[string]*FieldInfo)}
 }
 
+func (s *Schema) AddField(fieldName string, fieldType FieldType, length int) {
+	s.fields = append(s.fields, fieldName)
+	s.fieldInfo[fieldName] = NewFieldInfo(fieldType, length)
+}
+
 func (s *Schema) AddIntField(fieldName string) {
-	s.addField(fieldName, Integer, 0)
+	s.AddField(fieldName, Integer, 0)
 }
 
 func (s *Schema) AddStringField(fieldName string, length int) {
-	s.addField(fieldName, String, length)
+	s.AddField(fieldName, String, length)
 }
 
 func (s *Schema) Add(fieldName string, ss *Schema) error {
-	ft, err := ss.fieldType(fieldName)
+	ft, err := ss.FieldType(fieldName)
 	if err != nil {
 		return err
 	}
 
-	l, err := ss.length(fieldName)
+	l, err := ss.Length(fieldName)
 	if err != nil {
 		return err
 	}
 
-	s.addField(fieldName, ft, l)
+	s.AddField(fieldName, ft, l)
 	return nil
 }
 
@@ -71,12 +80,7 @@ func (s *Schema) Fields() []string {
 	return s.fields
 }
 
-func (s *Schema) addField(fieldName string, fieldType FieldType, length int) {
-	s.fields = append(s.fields, fieldName)
-	s.fieldInfo[fieldName] = NewFieldInfo(fieldType, length)
-}
-
-func (s *Schema) fieldType(fieldName string) (FieldType, error) {
+func (s *Schema) FieldType(fieldName string) (FieldType, error) {
 	fi, ok := s.fieldInfo[fieldName]
 	if !ok {
 		return Unknown, fmt.Errorf("cannot get field info: field name [%s]", fieldName)
@@ -84,7 +88,7 @@ func (s *Schema) fieldType(fieldName string) (FieldType, error) {
 	return fi.fieldType, nil
 }
 
-func (s *Schema) length(fieldName string) (int, error) {
+func (s *Schema) Length(fieldName string) (int, error) {
 	fi, ok := s.fieldInfo[fieldName]
 	if !ok {
 		return 0, fmt.Errorf("cannot get field info: field name [%s]", fieldName)
@@ -102,7 +106,7 @@ func (s *Schema) lengthInBytes(fieldName string) (int, error) {
 	case Integer:
 		return IntByteSize, nil
 	case String:
-		strlen, err := s.length(fieldName)
+		strlen, err := s.Length(fieldName)
 		if err != nil {
 			return 0, err
 		}

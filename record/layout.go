@@ -22,6 +22,10 @@ func NewLayout(s *Schema) (*Layout, error) {
 	return &Layout{s, offsets, pos}, nil
 }
 
+func NewLayoutWithOffsets(s *Schema, offsets map[string]int, slotSize int) *Layout {
+	return &Layout{s, offsets, slotSize}
+}
+
 func (l *Layout) Schema() *Schema {
 	return l.schema
 }
