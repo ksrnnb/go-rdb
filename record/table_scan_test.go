@@ -1,10 +1,11 @@
-package record
+package record_test
 
 import (
 	"fmt"
 	"math/rand"
 	"testing"
 
+	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,10 +16,10 @@ func TestTableScan(t *testing.T) {
 	tx, err := db.NewTransaction()
 	require.NoError(t, err)
 
-	schema := NewSchema()
+	schema := record.NewSchema()
 	schema.AddIntField("A")
 	schema.AddStringField("B", 9)
-	layout, err := NewLayout(schema)
+	layout, err := record.NewLayout(schema)
 	require.NoError(t, err)
 	for _, fn := range layout.Schema().Fields() {
 		ofs, err := layout.Offset(fn)
@@ -26,7 +27,7 @@ func TestTableScan(t *testing.T) {
 		fmt.Printf("%s has offset %d\n", fn, ofs)
 	}
 
-	ts, err := NewTableScan(tx, "T", layout)
+	ts, err := record.NewTableScan(tx, "T", layout)
 	require.NoError(t, err)
 
 	err = ts.BeforeFirst()
@@ -88,6 +89,6 @@ func TestTableScan(t *testing.T) {
 
 	err = ts.Close()
 	require.NoError(t, err)
-	err = ts.tx.Commit()
+	err = tx.Commit()
 	require.NoError(t, err)
 }

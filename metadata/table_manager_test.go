@@ -1,9 +1,10 @@
-package metadata
+package metadata_test
 
 import (
 	"fmt"
 	"testing"
 
+	"github.com/ksrnnb/go-rdb/metadata"
 	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/server"
 	"github.com/stretchr/testify/require"
@@ -13,7 +14,7 @@ func TestTableManager(t *testing.T) {
 	db := server.NewSimpleDB("data", 400, 8)
 	tx, err := db.NewTransaction()
 	require.NoError(t, err)
-	tm, err := NewTableManager(true, tx)
+	tm, err := metadata.NewTableManager(true, tx)
 	require.NoError(t, err)
 
 	schema := record.NewSchema()
