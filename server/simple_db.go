@@ -9,6 +9,7 @@ import (
 	"github.com/ksrnnb/go-rdb/buffer"
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/logs"
+	"github.com/ksrnnb/go-rdb/metadata"
 	"github.com/ksrnnb/go-rdb/tx"
 	"github.com/ksrnnb/go-rdb/tx/concurrency"
 )
@@ -17,11 +18,14 @@ type SimpleDB struct {
 	fm  *file.FileManager
 	lm  *logs.LogManager
 	bm  *buffer.BufferManager
+	mm  *metadata.MetadataManager
 	lt  *concurrency.LockTable
 	tng *tx.TransactionNumberGenerator
 }
 
-const blockSize = 400
+const defaultBlockSize = 400
+const defaultBufferSize = 8
+
 const logFile = "simpledb.log"
 
 func NewSimpleDB(dirname string, blockSize, bufferSize int) *SimpleDB {
@@ -52,6 +56,38 @@ func NewSimpleDB(dirname string, blockSize, bufferSize int) *SimpleDB {
 		lt:  concurrency.NewLockTable(),
 		tng: tx.NewTransactionNumberGenerator(),
 	}
+}
+
+func NewSimpleDBWithMetadata(dirname string) *SimpleDB {
+	db := NewSimpleDB(dirname, defaultBlockSize, defaultBufferSize)
+	tx, err := db.NewTransaction()
+	if err != nil {
+		log.Fatalf("NewSimpleDBWithMetadata() failed, %v", err)
+	}
+
+	isNew := db.fm.IsNew()
+	if isNew {
+		fmt.Println("creating new database...")
+	} else {
+		fmt.Println("recovering existing database...")
+		err := tx.Recover()
+		if err != nil {
+			log.Fatalf("NewSimpleDBWithMetadata() failed, %v", err)
+		}
+	}
+
+	mm, err := metadata.NewMetadataManager(isNew, tx)
+	if err != nil {
+		log.Fatalf("NewSimpleDBWithMetadata() failed, %v", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Fatalf("NewSimpleDBWithMetadata() failed, %v", err)
+	}
+
+	db.mm = mm
+	return db
 }
 
 func (db *SimpleDB) FileManager() *file.FileManager {
