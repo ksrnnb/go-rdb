@@ -41,6 +41,10 @@ func (vm *ViewManager) CreateView(viewName string, definition string, tx *tx.Tra
 	if err != nil {
 		return err
 	}
+	err = ts.Insert()
+	if err != nil {
+		return err
+	}
 	err = ts.SetString(viewNameField, viewName)
 	if err != nil {
 		return err
