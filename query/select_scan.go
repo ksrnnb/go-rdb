@@ -19,6 +19,7 @@ func (ss *SelectScan) BeforeFirst() error {
 	return ss.scan.BeforeFirst()
 }
 
+// Next は述語を満たすレコードを探す
 func (ss *SelectScan) Next() (bool, error) {
 	hasNext, err := ss.scan.Next()
 	if err != nil {
@@ -26,7 +27,11 @@ func (ss *SelectScan) Next() (bool, error) {
 	}
 
 	for hasNext {
-		if ss.pred.IsSatisfied(ss.scan) {
+		isSatisfied, err := ss.pred.IsSatisfied(ss.scan)
+		if err != nil {
+			return false, err
+		}
+		if isSatisfied {
 			return true, nil
 		}
 		newHasNext, err := ss.scan.Next()
