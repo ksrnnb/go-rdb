@@ -18,7 +18,7 @@ func NewStatInfo(numBlocks, numRecords int) StatInfo {
 	return StatInfo{numBlocks, numRecords}
 }
 
-func (si StatInfo) BlocksAccesseed() int {
+func (si StatInfo) BlocksAccessed() int {
 	return si.numBlocks
 }
 
@@ -117,9 +117,6 @@ func (sm *StatisticManager) refreshStatistics(tx *tx.Transaction) error {
 }
 
 func (sm *StatisticManager) calculateTableStatistics(tableName string, layout *record.Layout, tx *tx.Transaction) (StatInfo, error) {
-	sm.mux.Lock()
-	defer sm.mux.Unlock()
-
 	numRecords := 0
 	numBlocks := 0
 
