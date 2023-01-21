@@ -11,6 +11,8 @@ import (
 )
 
 func TestTableManager(t *testing.T) {
+	initializeFiles(t)
+
 	db := server.NewSimpleDB("data", 400, 8)
 	tx, err := db.NewTransaction()
 	require.NoError(t, err)
