@@ -102,6 +102,10 @@ func (db *SimpleDB) BufferManager() *buffer.BufferManager {
 	return db.bm
 }
 
+func (db *SimpleDB) MetadataManager() *metadata.MetadataManager {
+	return db.mm
+}
+
 func (db *SimpleDB) NewTransaction() (*tx.Transaction, error) {
 	return tx.NewTransaction(db.fm, db.lm, db.bm, db.lt, db.tng)
 }
