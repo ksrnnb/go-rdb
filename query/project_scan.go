@@ -3,11 +3,11 @@ package query
 import "errors"
 
 type ProjectScan struct {
-	scan      Scan
+	scan      Scanner
 	fieldList []string
 }
 
-func NewProjectScan(scan Scan, filedList []string) *ProjectScan {
+func NewProjectScan(scan Scanner, filedList []string) *ProjectScan {
 	return &ProjectScan{scan, filedList}
 }
 

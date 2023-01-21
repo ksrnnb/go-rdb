@@ -1,11 +1,11 @@
 package query
 
 type ProductScan struct {
-	scan1 Scan
-	scan2 Scan
+	scan1 Scanner
+	scan2 Scanner
 }
 
-func NewProductScan(scan1, scan2 Scan) (*ProductScan, error) {
+func NewProductScan(scan1, scan2 Scanner) (*ProductScan, error) {
 	_, err := scan1.Next()
 	if err != nil {
 		return nil, err

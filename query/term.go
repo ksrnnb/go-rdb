@@ -15,7 +15,7 @@ func NewTerm(lhs, rhs Expression) Term {
 	return Term{lhs, rhs}
 }
 
-func (t Term) IsSatisfied(s Scan) (bool, error) {
+func (t Term) IsSatisfied(s Scanner) (bool, error) {
 	lhsVal, err := t.lhs.Evaluate(s)
 	if err != nil {
 		return false, err

@@ -39,7 +39,7 @@ func (e Expression) AsFieldName() string {
 	return e.fieldName
 }
 
-func (e Expression) Evaluate(s Scan) (Constant, error) {
+func (e Expression) Evaluate(s Scanner) (Constant, error) {
 	if e.IsConstant() {
 		return e.val, nil
 	}

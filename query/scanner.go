@@ -2,7 +2,7 @@ package query
 
 import "github.com/ksrnnb/go-rdb/record"
 
-type Scan interface {
+type Scanner interface {
 	BeforeFirst() error
 	Next() (bool, error)
 	GetInt(fieldName string) (int, error)
@@ -12,10 +12,10 @@ type Scan interface {
 	Close() error
 }
 
-// UpdateScan は TableScan と SelectScan のみ実装
+// UpdateScanner は TableScan と SelectScan のみ実装
 // Select した結果は update できる
-type UpdateScan interface {
-	Scan
+type UpdateScanner interface {
+	Scanner
 	SetInt(fieldName string, val int) error
 	SetString(fieldName string, val string) error
 	SetVal(fieldName string, val Constant) error

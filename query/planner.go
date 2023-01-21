@@ -5,7 +5,7 @@ import (
 )
 
 type Planner interface {
-	Open() Scan
+	Open() Scanner
 	BlocksAccessed() int
 	RecordsOutput() int
 	DistinctValues(fieldName string) int

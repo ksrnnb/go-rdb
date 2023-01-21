@@ -7,11 +7,11 @@ import (
 )
 
 type SelectScan struct {
-	scan Scan
+	scan Scanner
 	pred Predicate
 }
 
-func NewSelectScan(scan Scan, pred Predicate) *SelectScan {
+func NewSelectScan(scan Scanner, pred Predicate) *SelectScan {
 	return &SelectScan{scan, pred}
 }
 
@@ -43,7 +43,7 @@ func (ss *SelectScan) Next() (bool, error) {
 	return false, nil
 }
 
-// Scan methods
+// Scanner methods
 
 func (ss *SelectScan) GetInt(fieldName string) (int, error) {
 	return ss.scan.GetInt(fieldName)
@@ -65,60 +65,60 @@ func (ss *SelectScan) Close() error {
 	return ss.scan.Close()
 }
 
-// UpdateScan methods
+// UpdateScanner methods
 
 func (ss *SelectScan) SetInt(fieldName string, val int) error {
-	us, ok := ss.scan.(UpdateScan)
+	us, ok := ss.scan.(UpdateScanner)
 	if !ok {
-		return fmt.Errorf("underlying scan must be UpdateScan, but got %T", ss.scan)
+		return fmt.Errorf("underlying scan must be UpdateScanner, but got %T", ss.scan)
 	}
 	return us.SetInt(fieldName, val)
 }
 
 func (ss *SelectScan) SetString(fieldName string, val string) error {
-	us, ok := ss.scan.(UpdateScan)
+	us, ok := ss.scan.(UpdateScanner)
 	if !ok {
-		return fmt.Errorf("underlying scan must be UpdateScan, but got %T", ss.scan)
+		return fmt.Errorf("underlying scan must be UpdateScanner, but got %T", ss.scan)
 	}
 	return us.SetString(fieldName, val)
 }
 
 func (ss *SelectScan) SetVal(fieldName string, val Constant) error {
-	us, ok := ss.scan.(UpdateScan)
+	us, ok := ss.scan.(UpdateScanner)
 	if !ok {
-		return fmt.Errorf("underlying scan must be UpdateScan, but got %T", ss.scan)
+		return fmt.Errorf("underlying scan must be UpdateScanner, but got %T", ss.scan)
 	}
 	return us.SetVal(fieldName, val)
 }
 
 func (ss *SelectScan) Delete() error {
-	us, ok := ss.scan.(UpdateScan)
+	us, ok := ss.scan.(UpdateScanner)
 	if !ok {
-		return fmt.Errorf("underlying scan must be UpdateScan, but got %T", ss.scan)
+		return fmt.Errorf("underlying scan must be UpdateScanner, but got %T", ss.scan)
 	}
 	return us.Delete()
 }
 
 func (ss *SelectScan) Insert() error {
-	us, ok := ss.scan.(UpdateScan)
+	us, ok := ss.scan.(UpdateScanner)
 	if !ok {
-		return fmt.Errorf("underlying scan must be UpdateScan, but got %T", ss.scan)
+		return fmt.Errorf("underlying scan must be UpdateScanner, but got %T", ss.scan)
 	}
 	return us.Insert()
 }
 
 func (ss *SelectScan) GetRid() (*record.RecordID, error) {
-	us, ok := ss.scan.(UpdateScan)
+	us, ok := ss.scan.(UpdateScanner)
 	if !ok {
-		return nil, fmt.Errorf("underlying scan must be UpdateScan, but got %T", ss.scan)
+		return nil, fmt.Errorf("underlying scan must be UpdateScanner, but got %T", ss.scan)
 	}
 	return us.GetRid()
 }
 
 func (ss *SelectScan) MoveToRid(rid *record.RecordID) error {
-	us, ok := ss.scan.(UpdateScan)
+	us, ok := ss.scan.(UpdateScanner)
 	if !ok {
-		return fmt.Errorf("underlying scan must be UpdateScan, but got %T", ss.scan)
+		return fmt.Errorf("underlying scan must be UpdateScanner, but got %T", ss.scan)
 	}
 	return us.MoveToRid(rid)
 }
