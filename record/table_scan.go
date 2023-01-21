@@ -115,8 +115,9 @@ func (ts *TableScan) SetVal(fieldName string, val interface{}) error {
 	return nil
 }
 
-// 現在のレコードのブロックから開始して、空きを探す
+// Insert は現在のレコードのブロックから開始して、空きを探す
 // 空きがあったら使用済みに変換して、現在のレコードに位置付ける
+// SetInt などを実行する前に必ず Insert を実行して currentSlot を更新する必要がある
 func (ts *TableScan) Insert() error {
 	nextSlot, err := ts.rp.InsertAfter(ts.currentSlot)
 	if err != nil {
