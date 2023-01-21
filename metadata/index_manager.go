@@ -142,7 +142,7 @@ func (im *IndexManager) IndexInfo(tableName string, tx *tx.Transaction) (map[str
 		return nil, err
 	}
 	for hasNext {
-		tn, err := ts.GetString(tableName)
+		tn, err := ts.GetString(tableNameField)
 		if err != nil {
 			return nil, err
 		}
@@ -170,6 +170,12 @@ func (im *IndexManager) IndexInfo(tableName string, tx *tx.Transaction) (map[str
 			return nil, err
 		}
 		iis[fieldName] = ii
+
+		newHasNext, err := ts.Next()
+		if err != nil {
+			return nil, err
+		}
+		hasNext = newHasNext
 	}
 	err = ts.Close()
 	if err != nil {
