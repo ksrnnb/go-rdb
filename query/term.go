@@ -1,6 +1,7 @@
 package query
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/ksrnnb/go-rdb/record"
@@ -74,4 +75,8 @@ func (t Term) EquatesWithFieldName(fieldName string) string {
 		return t.lhs.AsFieldName()
 	}
 	return ""
+}
+
+func (t Term) String() string {
+	return fmt.Sprintf("%s=%s", t.lhs.String(), t.rhs.String())
 }
