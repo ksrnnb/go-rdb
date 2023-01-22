@@ -77,7 +77,6 @@ func (l *Lexer) MatchIdentifier() bool {
 
 func (l *Lexer) EatDelimiter(d rune) error {
 	if !l.MatchDelimiter(d) {
-		fmt.Printf("delte error %c\n", d)
 		return ErrEatToken
 	}
 	l.nextToken()
@@ -86,8 +85,6 @@ func (l *Lexer) EatDelimiter(d rune) error {
 
 func (l *Lexer) EatIntConstant() (int, error) {
 	if !l.MatchIntConstant() {
-		fmt.Printf("const error \n")
-
 		return 0, ErrEatToken
 	}
 	i := l.currentToken().val.(int)
@@ -97,8 +94,6 @@ func (l *Lexer) EatIntConstant() (int, error) {
 
 func (l *Lexer) EatStringConstant() (string, error) {
 	if !l.MatchStringConstant() {
-		fmt.Printf("string error \n")
-
 		return "", ErrEatToken
 	}
 	s := l.currentToken().val.(string)
@@ -108,8 +103,6 @@ func (l *Lexer) EatStringConstant() (string, error) {
 
 func (l *Lexer) EatKeyword(w string) error {
 	if !l.MatchKeyword(w) {
-		fmt.Printf("keyword error %s\n", w)
-
 		return ErrEatToken
 	}
 	l.nextToken()
@@ -118,8 +111,6 @@ func (l *Lexer) EatKeyword(w string) error {
 
 func (l *Lexer) EatIdentifier() (string, error) {
 	if !l.MatchIdentifier() {
-		fmt.Printf("identifier error\n")
-
 		return "", ErrEatToken
 	}
 	s := l.currentToken().val.(string)
