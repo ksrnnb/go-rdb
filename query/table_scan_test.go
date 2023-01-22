@@ -1,10 +1,11 @@
-package record_test
+package query_test
 
 import (
 	"fmt"
 	"math/rand"
 	"testing"
 
+	"github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/server"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,7 @@ func TestTableScan(t *testing.T) {
 		fmt.Printf("%s has offset %d\n", fn, ofs)
 	}
 
-	ts, err := record.NewTableScan(tx, "T", layout)
+	ts, err := query.NewTableScan(tx, "T", layout)
 	require.NoError(t, err)
 
 	err = ts.BeforeFirst()

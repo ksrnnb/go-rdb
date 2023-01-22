@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ksrnnb/go-rdb/metadata"
-	"github.com/ksrnnb/go-rdb/record"
+	"github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/server"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +35,7 @@ func TestCatalog(t *testing.T) {
 
 	layout, err := tm.Layout(tableCategoryTableName, tx)
 	require.NoError(t, err)
-	ts, err := record.NewTableScan(tx, tableCategoryTableName, layout)
+	ts, err := query.NewTableScan(tx, tableCategoryTableName, layout)
 	require.NoError(t, err)
 
 	hasNext, err := ts.Next()
@@ -56,7 +56,7 @@ func TestCatalog(t *testing.T) {
 
 	flayout, err := tm.Layout(fieldCategoryTableName, tx)
 	require.NoError(t, err)
-	fts, err := record.NewTableScan(tx, fieldCategoryTableName, flayout)
+	fts, err := query.NewTableScan(tx, fieldCategoryTableName, flayout)
 	require.NoError(t, err)
 
 	hasNext, err = fts.Next()

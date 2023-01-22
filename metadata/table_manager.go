@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/tx"
 )
@@ -77,7 +78,7 @@ func (tm *TableManager) CreateTable(tableName string, schema *record.Schema, tx 
 }
 
 func (tm *TableManager) createTableCategoryTable(tableName string, tx *tx.Transaction, layout *record.Layout) error {
-	tcatTs, err := record.NewTableScan(tx, tableCategoryTableName, tm.tcatLayout)
+	tcatTs, err := query.NewTableScan(tx, tableCategoryTableName, tm.tcatLayout)
 	if err != nil {
 		return err
 	}
@@ -101,7 +102,7 @@ func (tm *TableManager) createTableCategoryTable(tableName string, tx *tx.Transa
 }
 
 func (tm *TableManager) createFieldCategoryTable(tableName string, schema *record.Schema, tx *tx.Transaction, layout *record.Layout) error {
-	fcatTs, err := record.NewTableScan(tx, fieldCategoryTableName, tm.fcatLayout)
+	fcatTs, err := query.NewTableScan(tx, fieldCategoryTableName, tm.fcatLayout)
 	if err != nil {
 		return err
 	}
@@ -157,7 +158,7 @@ func (tm *TableManager) createFieldCategoryTable(tableName string, schema *recor
 
 func (tm *TableManager) Layout(tableName string, tx *tx.Transaction) (*record.Layout, error) {
 	size := -1
-	tcatTs, err := record.NewTableScan(tx, tableCategoryTableName, tm.tcatLayout)
+	tcatTs, err := query.NewTableScan(tx, tableCategoryTableName, tm.tcatLayout)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +197,7 @@ func (tm *TableManager) Layout(tableName string, tx *tx.Transaction) (*record.La
 	schema := record.NewSchema()
 	offsets := make(map[string]int)
 
-	fcatTs, err := record.NewTableScan(tx, fieldCategoryTableName, tm.fcatLayout)
+	fcatTs, err := query.NewTableScan(tx, fieldCategoryTableName, tm.fcatLayout)
 	if err != nil {
 		return nil, err
 	}

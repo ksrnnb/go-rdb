@@ -3,6 +3,7 @@ package metadata
 import (
 	"sync"
 
+	"github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/tx"
 )
@@ -84,7 +85,7 @@ func (sm *StatisticManager) refreshStatistics(tx *tx.Transaction) error {
 		return err
 	}
 
-	ts, err := record.NewTableScan(tx, tableCategoryTableName, tcatLayout)
+	ts, err := query.NewTableScan(tx, tableCategoryTableName, tcatLayout)
 	if err != nil {
 		return err
 	}
@@ -120,7 +121,7 @@ func (sm *StatisticManager) calculateTableStatistics(tableName string, layout *r
 	numRecords := 0
 	numBlocks := 0
 
-	ts, err := record.NewTableScan(tx, tableName, layout)
+	ts, err := query.NewTableScan(tx, tableName, layout)
 	if err != nil {
 		return StatInfo{}, err
 	}

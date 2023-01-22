@@ -1,21 +1,22 @@
-package record
+package query
 
 import (
 	"fmt"
 
 	"github.com/ksrnnb/go-rdb/file"
+	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/tx"
 )
 
 type TableScan struct {
 	tx          *tx.Transaction
-	layout      *Layout
-	rp          *RecordPage
+	layout      *record.Layout
+	rp          *record.RecordPage
 	fileName    string
 	currentSlot int
 }
 
-func NewTableScan(tx *tx.Transaction, tableName string, layout *Layout) (*TableScan, error) {
+func NewTableScan(tx *tx.Transaction, tableName string, layout *record.Layout) (*TableScan, error) {
 	ts := &TableScan{
 		tx:       tx,
 		layout:   layout,
@@ -93,9 +94,25 @@ func (ts *TableScan) GetString(fieldName string) (string, error) {
 	return ts.rp.GetString(ts.currentSlot, fieldName)
 }
 
-// TODO: implement GetVal
-func (ts *TableScan) GetVal(fieldName string) {
-
+func (ts *TableScan) GetVal(fieldName string) (Constant, error) {
+	ft, err := ts.layout.Schema().FieldType(fieldName)
+	if err != nil {
+		return Constant{}, err
+	}
+	if ft == record.Integer {
+		v, err := ts.GetInt(fieldName)
+		if err != nil {
+			return Constant{}, err
+		}
+		return NewConstant(v), nil
+	} else if ft == record.String {
+		v, err := ts.GetString(fieldName)
+		if err != nil {
+			return Constant{}, err
+		}
+		return NewConstant(v), nil
+	}
+	return Constant{}, fmt.Errorf("invalid record type: %d", ft)
 }
 
 func (ts *TableScan) HasField(fieldName string) bool {
@@ -110,9 +127,25 @@ func (ts *TableScan) SetString(fieldName string, val string) error {
 	return ts.rp.SetString(ts.currentSlot, fieldName, val)
 }
 
-// TODO: implement SetVal
-func (ts *TableScan) SetVal(fieldName string, val interface{}) error {
-	return nil
+func (ts *TableScan) SetVal(fieldName string, val Constant) error {
+	ft, err := ts.layout.Schema().FieldType(fieldName)
+	if err != nil {
+		return err
+	}
+	if ft == record.Integer {
+		err := ts.SetInt(fieldName, val.intVal)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else if ft == record.String {
+		err := ts.SetString(fieldName, val.stringVal)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return fmt.Errorf("invalid record type: %d", ft)
 }
 
 // Insert は現在のレコードのブロックから開始して、空きを探す
@@ -155,19 +188,19 @@ func (ts *TableScan) Delete() error {
 	return ts.rp.Delete(ts.currentSlot)
 }
 
-func (ts *TableScan) MoveToRid(rid *RecordID) error {
+func (ts *TableScan) MoveToRid(rid *record.RecordID) error {
 	err := ts.Close()
 	if err != nil {
 		return err
 	}
 	blk := file.NewBlockID(ts.fileName, rid.BlockNumber())
-	ts.rp = NewRecordPage(ts.tx, blk, ts.layout)
+	ts.rp = record.NewRecordPage(ts.tx, blk, ts.layout)
 	ts.currentSlot = rid.Slot()
 	return nil
 }
 
-func (ts *TableScan) GetRid() *RecordID {
-	return NewRecordID(ts.rp.Block().Number(), ts.currentSlot)
+func (ts *TableScan) GetRid() *record.RecordID {
+	return record.NewRecordID(ts.rp.Block().Number(), ts.currentSlot)
 }
 
 func (ts *TableScan) moveToBlock(blknum int) error {
@@ -177,7 +210,7 @@ func (ts *TableScan) moveToBlock(blknum int) error {
 	}
 
 	blk := file.NewBlockID(ts.fileName, blknum)
-	ts.rp = NewRecordPage(ts.tx, blk, ts.layout)
+	ts.rp = record.NewRecordPage(ts.tx, blk, ts.layout)
 	if err != nil {
 		return err
 	}
@@ -197,7 +230,7 @@ func (ts *TableScan) moveToNewBlock() error {
 		return err
 	}
 
-	ts.rp = NewRecordPage(ts.tx, blk, ts.layout)
+	ts.rp = record.NewRecordPage(ts.tx, blk, ts.layout)
 	err = ts.rp.Format()
 	if err != nil {
 		return err

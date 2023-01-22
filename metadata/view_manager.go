@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/tx"
 )
@@ -37,7 +38,7 @@ func (vm *ViewManager) CreateView(viewName string, definition string, tx *tx.Tra
 	if err != nil {
 		return err
 	}
-	ts, err := record.NewTableScan(tx, viewCategoryTableName, layout)
+	ts, err := query.NewTableScan(tx, viewCategoryTableName, layout)
 	if err != nil {
 		return err
 	}
@@ -63,7 +64,7 @@ func (vm *ViewManager) Definition(viewName string, tx *tx.Transaction) (string, 
 		return "", err
 	}
 
-	ts, err := record.NewTableScan(tx, viewCategoryTableName, layout)
+	ts, err := query.NewTableScan(tx, viewCategoryTableName, layout)
 	if err != nil {
 		return "", err
 	}

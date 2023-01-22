@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"github.com/ksrnnb/go-rdb/index"
+	"github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/tx"
 )
@@ -105,7 +106,7 @@ func NewIndexManager(isNew bool, tm *TableManager, sm *StatisticManager, tx *tx.
 
 // CreateIndex は indexCategoryTableName テーブルにインデックスのレコードを追加する
 func (im *IndexManager) CreateIndex(indexName string, tableName string, fieldName string, tx *tx.Transaction) error {
-	ts, err := record.NewTableScan(tx, indexCategoryTableName, im.layout)
+	ts, err := query.NewTableScan(tx, indexCategoryTableName, im.layout)
 	if err != nil {
 		return err
 	}
@@ -133,7 +134,7 @@ func (im *IndexManager) CreateIndex(indexName string, tableName string, fieldNam
 // IndexInfo は indexCategoryTableName をスキャンして、指定したテーブルのインデックス情報を取得する
 func (im *IndexManager) IndexInfo(tableName string, tx *tx.Transaction) (map[string]*IndexInfo, error) {
 	iis := make(map[string]*IndexInfo)
-	ts, err := record.NewTableScan(tx, indexCategoryTableName, im.layout)
+	ts, err := query.NewTableScan(tx, indexCategoryTableName, im.layout)
 	if err != nil {
 		return nil, err
 	}

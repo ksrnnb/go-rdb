@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ksrnnb/go-rdb/metadata"
+	"github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/server"
 	"github.com/stretchr/testify/assert"
@@ -63,7 +64,7 @@ func TestMetadataManager(t *testing.T) {
 	}
 
 	// Part2 Statistics Metadata
-	ts, err := record.NewTableScan(tx, "MyTable", layout)
+	ts, err := query.NewTableScan(tx, "MyTable", layout)
 	require.NoError(t, err)
 	for i := 0; i < 50; i++ {
 		err = ts.Insert()
