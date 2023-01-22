@@ -51,7 +51,11 @@ func NewLexer(query string) (*Lexer, error) {
 
 // TODO: Match*** や Eat*** は Lexer のやること？？
 func (l *Lexer) MatchDelimiter(d rune) bool {
-	return d == l.currentToken().val.(rune)
+	v, ok := l.currentToken().val.(rune)
+	if !ok {
+		return false
+	}
+	return v == d
 }
 
 func (l *Lexer) MatchIntConstant() bool {
@@ -73,48 +77,53 @@ func (l *Lexer) MatchIdentifier() bool {
 
 func (l *Lexer) EatDelimiter(d rune) error {
 	if !l.MatchDelimiter(d) {
+		fmt.Printf("delte error %c\n", d)
 		return ErrEatToken
 	}
-	return l.nextToken()
+	l.nextToken()
+	return nil
 }
 
 func (l *Lexer) EatIntConstant() (int, error) {
 	if !l.MatchIntConstant() {
+		fmt.Printf("const error \n")
+
 		return 0, ErrEatToken
 	}
 	i := l.currentToken().val.(int)
-	if err := l.nextToken(); err != nil {
-		return 0, err
-	}
+	l.nextToken()
 	return i, nil
 }
 
 func (l *Lexer) EatStringConstant() (string, error) {
 	if !l.MatchStringConstant() {
+		fmt.Printf("string error \n")
+
 		return "", ErrEatToken
 	}
 	s := l.currentToken().val.(string)
-	if err := l.nextToken(); err != nil {
-		return "", err
-	}
+	l.nextToken()
 	return s, nil
 }
 
 func (l *Lexer) EatKeyword(w string) error {
 	if !l.MatchKeyword(w) {
+		fmt.Printf("keyword error %s\n", w)
+
 		return ErrEatToken
 	}
-	return l.nextToken()
+	l.nextToken()
+	return nil
 }
 
 func (l *Lexer) EatIdentifier() (string, error) {
 	if !l.MatchIdentifier() {
+		fmt.Printf("identifier error\n")
+
 		return "", ErrEatToken
 	}
 	s := l.currentToken().val.(string)
-	if err := l.nextToken(); err != nil {
-		return "", err
-	}
+	l.nextToken()
 	return s, nil
 }
 
@@ -129,6 +138,10 @@ func (l *Lexer) Tokenize() error {
 		}
 	}
 	return nil
+}
+
+func (l *Lexer) CurrentTokenValue() interface{} {
+	return l.currentToken().val
 }
 
 func (l *Lexer) tokenize() error {
@@ -321,12 +334,11 @@ func (l *Lexer) currentToken() Token {
 	return l.tokens[l.pos]
 }
 
-func (l *Lexer) nextToken() error {
+func (l *Lexer) nextToken() {
 	if l.pos == len(l.tokens)-1 {
-		return ErrEatToken
+		return
 	}
 	l.pos++
-	return nil
 }
 
 func isKeyword(k string) bool {
