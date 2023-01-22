@@ -67,6 +67,16 @@ func (s *Schema) Add(fieldName string, ss *Schema) error {
 	return nil
 }
 
+func (s *Schema) AddAll(schema *Schema) error {
+	for _, fn := range schema.Fields() {
+		err := s.Add(fn, schema)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *Schema) HasField(fieldName string) bool {
 	for _, fn := range s.fields {
 		if fn == fieldName {
