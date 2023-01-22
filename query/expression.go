@@ -46,6 +46,8 @@ func (e Expression) Evaluate(s Scanner) (Constant, error) {
 	return s.GetVal(e.fieldName)
 }
 
+// AppliesTo は Expression の値が Schema に含まれるかどうかを返す
+// 定数の場合は無条件で true を返す
 func (e Expression) AppliesTo(schema *record.Schema) bool {
 	if e.IsConstant() {
 		return true

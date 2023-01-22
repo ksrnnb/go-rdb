@@ -27,6 +27,8 @@ func (t Term) IsSatisfied(s Scanner) (bool, error) {
 	return lhsVal.Equals(rhsVal), nil
 }
 
+// AppliesTo は Term の lhs, rhs ともに Expression の条件を満たす場合に true を返す
+// Expression が Identifier の場合は、スキーマに定義されているかどうかを確認する
 func (t Term) AppliesTo(schema *record.Schema) bool {
 	return t.lhs.AppliesTo(schema) && t.rhs.AppliesTo(schema)
 }
