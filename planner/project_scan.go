@@ -5,13 +5,13 @@ import (
 	"github.com/ksrnnb/go-rdb/record"
 )
 
-type ProjectScan struct {
+type ProjectPlan struct {
 	p      Planner
 	schema *record.Schema
 }
 
-func NewProjectScan(p Planner, fieldNames []string) (*ProjectScan, error) {
-	ps := &ProjectScan{p: p, schema: record.NewSchema()}
+func NewProjectPlan(p Planner, fieldNames []string) (*ProjectPlan, error) {
+	ps := &ProjectPlan{p: p, schema: record.NewSchema()}
 
 	for _, fn := range fieldNames {
 		err := ps.schema.Add(fn, ps.p.Schema())
@@ -22,7 +22,7 @@ func NewProjectScan(p Planner, fieldNames []string) (*ProjectScan, error) {
 	return ps, nil
 }
 
-func (ps *ProjectScan) Open() (query.Scanner, error) {
+func (ps *ProjectPlan) Open() (query.Scanner, error) {
 	s, err := ps.p.Open()
 	if err != nil {
 		return nil, err
@@ -30,18 +30,18 @@ func (ps *ProjectScan) Open() (query.Scanner, error) {
 	return query.NewProjectScan(s, ps.schema.Fields()), nil
 }
 
-func (ps *ProjectScan) BlocksAccessed() int {
+func (ps *ProjectPlan) BlocksAccessed() int {
 	return ps.p.BlocksAccessed()
 }
 
-func (ps *ProjectScan) RecordsOutput() int {
+func (ps *ProjectPlan) RecordsOutput() int {
 	return ps.p.RecordsOutput()
 }
 
-func (ps *ProjectScan) DistinctValues(fieldName string) int {
+func (ps *ProjectPlan) DistinctValues(fieldName string) int {
 	return ps.p.DistinctValues(fieldName)
 }
 
-func (ps *ProjectScan) Schema() *record.Schema {
+func (ps *ProjectPlan) Schema() *record.Schema {
 	return ps.schema
 }
