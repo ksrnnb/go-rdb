@@ -1,6 +1,8 @@
 package metadata
 
 import (
+	"fmt"
+
 	"github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/tx"
@@ -192,6 +194,10 @@ func (tm *TableManager) Layout(tableName string, tx *tx.Transaction) (*record.La
 	err = tcatTs.Close()
 	if err != nil {
 		return nil, err
+	}
+
+	if size == -1 {
+		return nil, fmt.Errorf("table is not found: %s", tableName)
 	}
 
 	schema := record.NewSchema()
