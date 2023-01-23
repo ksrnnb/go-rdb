@@ -11,8 +11,8 @@ const MaxViewDefinitionLength = 100
 const viewCategoryTableName = "view_categories"
 
 const (
-	viewNameField       = "table_name"
-	viewDefinitionField = "slot_size"
+	viewNameField       = "view_name"
+	viewDefinitionField = "view_definition"
 )
 
 type ViewManager struct {
