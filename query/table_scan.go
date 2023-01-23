@@ -199,8 +199,8 @@ func (ts *TableScan) MoveToRid(rid *record.RecordID) error {
 	return nil
 }
 
-func (ts *TableScan) GetRid() *record.RecordID {
-	return record.NewRecordID(ts.rp.Block().Number(), ts.currentSlot)
+func (ts *TableScan) GetRid() (*record.RecordID, error) {
+	return record.NewRecordID(ts.rp.Block().Number(), ts.currentSlot), nil
 }
 
 func (ts *TableScan) moveToBlock(blknum int) error {

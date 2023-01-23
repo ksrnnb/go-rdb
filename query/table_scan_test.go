@@ -41,8 +41,9 @@ func TestTableScan(t *testing.T) {
 		require.NoError(t, err)
 		err = ts.SetString("B", fmt.Sprintf("rec%d", n))
 		require.NoError(t, err)
-
-		fmt.Printf("inserting into slot %s: {%d, rec%d}\n", ts.GetRid(), n, n)
+		rid, err := ts.GetRid()
+		require.NoError(t, err)
+		fmt.Printf("inserting into slot %s: {%d, rec%d}\n", rid, n, n)
 	}
 
 	count := 0
@@ -60,7 +61,9 @@ func TestTableScan(t *testing.T) {
 
 		if a < 25 {
 			count++
-			fmt.Printf("[deleting] slot %s: {%d, %s}\n", ts.GetRid(), a, b)
+			rid, err := ts.GetRid()
+			require.NoError(t, err)
+			fmt.Printf("[deleting] slot %s: {%d, %s}\n", rid, a, b)
 			err = ts.Delete()
 			require.NoError(t, err)
 		}
@@ -80,7 +83,9 @@ func TestTableScan(t *testing.T) {
 		require.NoError(t, err)
 		b, err := ts.GetString("B")
 		require.NoError(t, err)
-		fmt.Printf("[after delete] slot %s: {%d, %s}\n", ts.GetRid(), a, b)
+		rid, err := ts.GetRid()
+		require.NoError(t, err)
+		fmt.Printf("[after delete] slot %s: {%d, %s}\n", rid, a, b)
 
 		assert.GreaterOrEqual(t, a, 25)
 

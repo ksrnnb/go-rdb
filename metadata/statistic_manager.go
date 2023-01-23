@@ -133,7 +133,11 @@ func (sm *StatisticManager) calculateTableStatistics(tableName string, layout *r
 
 	for hasNext {
 		numRecords++
-		numBlocks = ts.GetRid().BlockNumber() + 1
+		rid, err := ts.GetRid()
+		if err != nil {
+			return StatInfo{}, err
+		}
+		numBlocks = rid.BlockNumber() + 1
 
 		newHasNext, err := ts.Next()
 		if err != nil {
