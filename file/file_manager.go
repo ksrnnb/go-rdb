@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,10 +23,15 @@ type FileManager struct {
 }
 
 // NewFileManager はシステム起動時に SimpleDB によって実行される
-func NewFileManager(dbDirectory string, bs int) (*FileManager, error) {
+func NewFileManager(dirname string, bs int) (*FileManager, error) {
 	var isNew bool
-	if _, err := os.Stat(dbDirectory); os.IsNotExist(err) {
+	if _, err := os.Stat(dirname); os.IsNotExist(err) {
 		isNew = true
+	}
+
+	dbDirectory, err := createDirectoryIfNeeded(dirname)
+	if err != nil {
+		log.Fatalf("NewSimpleDB() failed, %v", err)
 	}
 
 	fm := &FileManager{
@@ -36,7 +42,8 @@ func NewFileManager(dbDirectory string, bs int) (*FileManager, error) {
 	}
 
 	// tempから始まるファイルは削除
-	err := filepath.Walk(dbDirectory, func(path string, fi fs.FileInfo, err error) error {
+	// TODO: 消す
+	err = filepath.Walk(dbDirectory, func(path string, fi fs.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("file: NewFileManager failed, %v", err)
 		}
@@ -187,4 +194,25 @@ func (fm *FileManager) getFile(filename string) (*os.File, error) {
 
 	fm.openFiles[filename] = f
 	return f, nil
+}
+
+// createDirectoryIfNeeded()はディレクトリ名を引数にとり、
+// 兄弟となる階層にディレクトリが存在しなければ作成、存在すればパスを返す
+func createDirectoryIfNeeded(dirname string) (dbDirectory string, err error) {
+	dbDirectory = filepath.Join("./..", dirname)
+
+	_, err = os.Stat(dbDirectory)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(dbDirectory, 0744)
+
+		if err != nil {
+			return "", fmt.Errorf("newDirectory() failed, %v", err)
+		}
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	return dbDirectory, nil
 }

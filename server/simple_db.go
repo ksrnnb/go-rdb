@@ -3,13 +3,12 @@ package server
 import (
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 
 	"github.com/ksrnnb/go-rdb/buffer"
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/ksrnnb/go-rdb/logs"
 	"github.com/ksrnnb/go-rdb/metadata"
+	"github.com/ksrnnb/go-rdb/planner"
 	"github.com/ksrnnb/go-rdb/tx"
 	"github.com/ksrnnb/go-rdb/tx/concurrency"
 )
@@ -19,6 +18,7 @@ type SimpleDB struct {
 	lm  *logs.LogManager
 	bm  *buffer.BufferManager
 	mm  *metadata.MetadataManager
+	pe  *planner.PlanExecuter
 	lt  *concurrency.LockTable
 	tng *tx.TransactionNumberGenerator
 }
@@ -29,13 +29,7 @@ const defaultBufferSize = 8
 const logFile = "simpledb.log"
 
 func NewSimpleDB(dirname string, blockSize, bufferSize int) *SimpleDB {
-	dbDirectory, err := createDirectoryIfNeeded(dirname)
-
-	if err != nil {
-		log.Fatalf("NewSimpleDB() failed, %v", err)
-	}
-
-	fm, err := file.NewFileManager(dbDirectory, blockSize)
+	fm, err := file.NewFileManager(dirname, blockSize)
 
 	if err != nil {
 		log.Fatalf("NewSimpleDB() failed, %v", err)
@@ -81,6 +75,10 @@ func NewSimpleDBWithMetadata(dirname string) *SimpleDB {
 		log.Fatalf("NewSimpleDBWithMetadata() failed, %v", err)
 	}
 
+	qp := planner.NewBasicQueryPlanner(mm)
+	up := planner.NewBasicUpdatePlanner(mm)
+	db.pe = planner.NewPlanExecuter(qp, up)
+
 	err = tx.Commit()
 	if err != nil {
 		log.Fatalf("NewSimpleDBWithMetadata() failed, %v", err)
@@ -106,27 +104,10 @@ func (db *SimpleDB) MetadataManager() *metadata.MetadataManager {
 	return db.mm
 }
 
-func (db *SimpleDB) NewTransaction() (*tx.Transaction, error) {
-	return tx.NewTransaction(db.fm, db.lm, db.bm, db.lt, db.tng)
+func (db *SimpleDB) PlanExecuter() *planner.PlanExecuter {
+	return db.pe
 }
 
-// createDirectoryIfNeeded()はディレクトリ名を引数にとり、
-// 兄弟となる階層にディレクトリが存在しなければ作成、存在すればパスを返す
-func createDirectoryIfNeeded(dirname string) (dbDirectory string, err error) {
-	dbDirectory = filepath.Join("./..", dirname)
-
-	_, err = os.Stat(dbDirectory)
-	if os.IsNotExist(err) {
-		err = os.Mkdir(dbDirectory, 0744)
-
-		if err != nil {
-			return "", fmt.Errorf("newDirectory() failed, %v", err)
-		}
-	}
-
-	if err != nil {
-		return "", err
-	}
-
-	return dbDirectory, nil
+func (db *SimpleDB) NewTransaction() (*tx.Transaction, error) {
+	return tx.NewTransaction(db.fm, db.lm, db.bm, db.lt, db.tng)
 }
