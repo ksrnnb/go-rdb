@@ -110,6 +110,10 @@ func (bup *BasicUpdatePlanner) ExecuteInsert(id *parser.InsertData, tx *tx.Trans
 	if !ok {
 		return 0, errors.New("scanner should be update scanner")
 	}
+	err = us.Insert()
+	if err != nil {
+		return 0, nil
+	}
 	vals := id.Values()
 	for i, fn := range id.Fields() {
 		val := vals[i]
