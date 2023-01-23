@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const dbDirectory = "./../data"
-
 func newLogIterator(t *testing.T) *LogIterator {
 	t.Helper()
 	fm := newFileManager(t)
@@ -24,7 +22,7 @@ func newLogIterator(t *testing.T) *LogIterator {
 
 func newFileManager(t *testing.T) *file.FileManager {
 	t.Helper()
-	fm, err := file.NewFileManager(dbDirectory, 400)
+	fm, err := file.NewFileManager("data", 400)
 
 	require.NoError(t, err)
 	return fm

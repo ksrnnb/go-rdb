@@ -1,46 +1,20 @@
 package file
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const dbDirectory = "./../data"
-
 func TestNewFileManager(t *testing.T) {
-	if _, err := os.Stat(dbDirectory); os.IsNotExist(err) {
-		err = os.Mkdir(dbDirectory, 0744)
-
-		if err != nil {
-			t.Fatalf("TestNewFileManager: db directory cannot be created, %v", err)
-		}
-	}
-
-	tmpFileName := filepath.Join(dbDirectory, "tempTest")
-	_, err := os.Create(tmpFileName)
-
-	if err != nil {
-		t.Fatalf("TestNewFileManager: file cannot be created, %v", err)
-	}
-
-	_, err = NewFileManager(dbDirectory, 1024)
-
-	if err != nil {
-		t.Errorf("TestNewFileManager: file manager cannot be created, %v", err)
-	}
-
-	if _, err := os.Stat(tmpFileName); !os.IsNotExist(err) {
-		t.Errorf("TestNewFileManager: temp file should be removed, but it exists, %v", err)
-	}
+	_, err := NewFileManager("data", 1024)
+	assert.NoError(t, err)
 }
 
 func TestFile(t *testing.T) {
 	bs := 400
-	fm, err := NewFileManager(dbDirectory, bs)
+	fm, err := NewFileManager("data", bs)
 
 	require.NoError(t, err)
 
