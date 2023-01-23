@@ -8,10 +8,10 @@ import (
 
 type SelectScan struct {
 	scan Scanner
-	pred Predicate
+	pred *Predicate
 }
 
-func NewSelectScan(scan Scanner, pred Predicate) *SelectScan {
+func NewSelectScan(scan Scanner, pred *Predicate) *SelectScan {
 	return &SelectScan{scan, pred}
 }
 

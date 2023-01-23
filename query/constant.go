@@ -27,6 +27,10 @@ func NewConstant(val interface{}) Constant {
 	}
 }
 
+func (c Constant) IsUnknown() bool {
+	return c.ctype == UnknownConstant
+}
+
 func (c Constant) AsInt() int {
 	return c.intVal
 }
