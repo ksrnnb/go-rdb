@@ -24,21 +24,21 @@ func TestPlanExecuter(t *testing.T) {
 	require.NoError(t, err)
 
 	// Part1: Create table
-	cq := "create table student (sname varchar(16), gradyear int)"
+	cq := "create table student (sid int, sname varchar(16), gradyear int)"
 	_, err = pe.ExecuteUpdate(cq, tx)
 	require.NoError(t, err)
 
 	// Part2: Insert Data
-	iq1 := "insert into student (sname, gradyear) values ('user1', 2020)"
+	iq1 := "insert into student (sid, sname, gradyear) values (1, 'user1', 2020)"
 	_, err = pe.ExecuteUpdate(iq1, tx)
 	require.NoError(t, err)
 
-	iq2 := "insert into student (sname, gradyear) values ('user2', 2020)"
+	iq2 := "insert into student (sid, sname, gradyear) values (2, 'user2', 2020)"
 	_, err = pe.ExecuteUpdate(iq2, tx)
 	require.NoError(t, err)
 
 	// Part3: Select Data
-	sq := "select sname, gradyear from student"
+	sq := "select sid, sname, gradyear from student"
 	p, err := pe.CreateQueryPlan(sq, tx)
 	require.NoError(t, err)
 	s, err := p.Open()
@@ -46,16 +46,23 @@ func TestPlanExecuter(t *testing.T) {
 	hasNext, err := s.Next()
 	require.NoError(t, err)
 	for hasNext {
+		sid, err := s.GetInt("sid")
+		require.NoError(t, err)
 		sname, err := s.GetString("sname")
 		require.NoError(t, err)
 		gradYear, err := s.GetInt("gradyear")
 		require.NoError(t, err)
-		fmt.Printf("%s %d\n", sname, gradYear)
+		fmt.Printf("sid: %d, sname: %s, gradyear:%d\n", sid, sname, gradYear)
 		newHasNext, err := s.Next()
 		require.NoError(t, err)
 		hasNext = newHasNext
 	}
 	err = s.Close()
+	require.NoError(t, err)
+
+	// Part4: Create Index
+	iq := "create index student_sid_idx on student (sid)"
+	_, err = pe.ExecuteUpdate(iq, tx)
 	require.NoError(t, err)
 
 	// Part4: Update Data
