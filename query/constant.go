@@ -1,6 +1,10 @@
 package query
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/ksrnnb/go-rdb/hashes"
+)
 
 type ConstantType uint8
 
@@ -65,6 +69,10 @@ func (c Constant) String() string {
 		return strconv.Itoa(c.intVal)
 	}
 	return c.stringVal
+}
+
+func (c Constant) HashCode() uint32 {
+	return hashes.HashCode(c)
 }
 
 func (c Constant) compareToInt(cc Constant) int {
