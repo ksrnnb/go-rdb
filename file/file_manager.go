@@ -199,7 +199,7 @@ func (fm *FileManager) getFile(filename string) (*os.File, error) {
 // createDirectoryIfNeeded()はディレクトリ名を引数にとり、
 // 兄弟となる階層にディレクトリが存在しなければ作成、存在すればパスを返す
 func createDirectoryIfNeeded(dirname string) (dbDirectory string, err error) {
-	dbDirectory = filepath.Join("./..", dirname)
+	dbDirectory = filepath.Join("./", dirname)
 
 	_, err = os.Stat(dbDirectory)
 	if os.IsNotExist(err) {
