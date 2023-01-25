@@ -52,6 +52,9 @@ func (bl *BufferList) pin(blk *file.BlockID) error {
 func (bl *BufferList) unpin(blk *file.BlockID) error {
 	txBuf, err := bl.getTxBuffer(blk)
 	if err != nil {
+		if errors.Is(err, ErrBufferNotFound) {
+			return nil
+		}
 		return err
 	}
 
