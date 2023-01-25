@@ -21,10 +21,10 @@ const NumBuckets = 100
 
 // インデックスレコードがもつフィールドの定義
 const (
-	idField        = "id"
-	blockField     = "block"
-	daraRidField   = "data_record_id"
-	dataValueField = "data_value"
+	IndexIdField        = "id"
+	IndexBlockField     = "block"
+	IndexDataRidField   = "data_record_id"
+	IndexDataValueField = "data_value"
 )
 
 func NewHashIndex(tx *tx.Transaction, indexName string, layout *record.Layout) *HashIndex {
@@ -53,7 +53,7 @@ func (hi *HashIndex) Next() (bool, error) {
 		return false, err
 	}
 	for hasNext {
-		v, err := hi.ts.GetVal(dataValueField)
+		v, err := hi.ts.GetVal(IndexDataValueField)
 		if err != nil {
 			return false, err
 		}
@@ -74,11 +74,11 @@ func (hi *HashIndex) GetDataRid() (*record.RecordID, error) {
 		return nil, errors.New("HashIndex doesn't have TableScan")
 	}
 
-	blknum, err := hi.ts.GetInt(blockField)
+	blknum, err := hi.ts.GetInt(IndexBlockField)
 	if err != nil {
 		return nil, err
 	}
-	id, err := hi.ts.GetInt(idField)
+	id, err := hi.ts.GetInt(IndexIdField)
 	if err != nil {
 		return nil, err
 	}
@@ -95,17 +95,17 @@ func (hi *HashIndex) Insert(val query.Constant, rid *record.RecordID) error {
 		return err
 	}
 
-	err = hi.ts.SetInt(blockField, rid.BlockNumber())
+	err = hi.ts.SetInt(IndexBlockField, rid.BlockNumber())
 	if err != nil {
 		return err
 	}
 
-	err = hi.ts.SetInt(idField, rid.Slot())
+	err = hi.ts.SetInt(IndexIdField, rid.Slot())
 	if err != nil {
 		return err
 	}
 
-	err = hi.ts.SetVal(dataValueField, val)
+	err = hi.ts.SetVal(IndexDataValueField, val)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (hi *HashIndex) Delete(val query.Constant, rid *record.RecordID) error {
 		return err
 	}
 	for hasNext {
-		v, err := hi.ts.GetVal(dataValueField)
+		v, err := hi.ts.GetVal(IndexDataValueField)
 		if err != nil {
 			return err
 		}
