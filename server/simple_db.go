@@ -56,7 +56,7 @@ func NewSimpleDBWithMetadata(dirname string) *SimpleDB {
 	db := NewSimpleDB(dirname, defaultBlockSize, defaultBufferSize)
 	tx, err := db.NewTransaction()
 	if err != nil {
-		log.Fatalf("NewSimpleDBWithMetadata() failed, %v", err)
+		log.Fatalf("NewTransaction() failed, %v", err)
 	}
 
 	isNew := db.fm.IsNew()
@@ -64,15 +64,16 @@ func NewSimpleDBWithMetadata(dirname string) *SimpleDB {
 		fmt.Println("creating new database...")
 	} else {
 		fmt.Println("recovering existing database...")
-		err := tx.Recover()
+		// TODO: fix recover
+		// err := tx.Recover()
 		if err != nil {
-			log.Fatalf("NewSimpleDBWithMetadata() failed, %v", err)
+			log.Fatalf("Recover() failed, %v", err)
 		}
 	}
 
 	mm, err := metadata.NewMetadataManager(isNew, tx)
 	if err != nil {
-		log.Fatalf("NewSimpleDBWithMetadata() failed, %v", err)
+		log.Fatalf("NewMetadataManager() failed, %v", err)
 	}
 
 	qp := planner.NewBasicQueryPlanner(mm)
@@ -81,7 +82,7 @@ func NewSimpleDBWithMetadata(dirname string) *SimpleDB {
 
 	err = tx.Commit()
 	if err != nil {
-		log.Fatalf("NewSimpleDBWithMetadata() failed, %v", err)
+		log.Fatalf("Commit() failed, %v", err)
 	}
 
 	db.mm = mm
