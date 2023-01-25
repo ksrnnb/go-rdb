@@ -35,6 +35,10 @@ func (c Constant) IsUnknown() bool {
 	return c.ctype == UnknownConstant
 }
 
+func (c Constant) ConstantType() ConstantType {
+	return c.ctype
+}
+
 func (c Constant) AsInt() int {
 	return c.intVal
 }
