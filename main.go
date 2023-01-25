@@ -76,7 +76,7 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		fmt.Fprint(w, "executed update")
+		fmt.Println("executed update")
 		err = tx.Commit()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
