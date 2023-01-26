@@ -40,7 +40,7 @@ var keywords = []string{
 
 func NewLexer(query string) (*Lexer, error) {
 	l := &Lexer{
-		reader: bufio.NewReader(strings.NewReader(strings.ToLower(query))),
+		reader: bufio.NewReader(strings.NewReader(query)),
 		pos:    0,
 	}
 	if err := l.Tokenize(); err != nil {
@@ -172,8 +172,9 @@ func (l *Lexer) tokenize() error {
 			return err
 		}
 
-		if isKeyword(idt) {
-			l.tokens = append(l.tokens, NewToken(Keyword, idt))
+		lowerIdt := strings.ToLower(idt)
+		if isKeyword(lowerIdt) {
+			l.tokens = append(l.tokens, NewToken(Keyword, lowerIdt))
 			return nil
 		}
 
