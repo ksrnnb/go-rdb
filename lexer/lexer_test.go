@@ -26,6 +26,12 @@ func TestLexer(t *testing.T) {
 			want:     []interface{}{"update", "users", "set", "a", '=', "hoge", "where", "id", '=', 3},
 			wantType: []TokenType{Keyword, Identifier, Keyword, Identifier, Delimiter, String, Keyword, Identifier, Delimiter, Integer},
 		},
+		{
+			name:     "select statement with uppercase",
+			query:    "SELECT a, b FroM users wheRE id=3",
+			want:     []interface{}{"select", "a", ',', "b", "from", "users", "where", "id", '=', 3},
+			wantType: []TokenType{Keyword, Identifier, Delimiter, Identifier, Keyword, Identifier, Keyword, Identifier, Delimiter, Integer},
+		},
 	}
 
 	for _, tt := range tests {
