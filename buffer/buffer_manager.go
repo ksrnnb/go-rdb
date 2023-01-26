@@ -11,7 +11,7 @@ import (
 )
 
 // デッドロックを回避するために、最大の待ち時間を設定する
-const maxWatingTime = 10 * time.Second
+const maxWaitingTime = 10 * time.Second
 
 var errNotExistUnpin = errors.New("unpin buffer doesn't exist")
 
@@ -85,22 +85,23 @@ func (bm *BufferManager) Unpin(b *Buffer) {
 // pinできたらBufferを返す
 // ディスクに書き込む可能性のあるメソッドはPin()またはFlushAll()のみ
 func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
+	start := time.Now()
 	result := make(chan pinResult)
 	defer close(result)
 
-	go bm.pin(result, blk)
+	go bm.pin(result, blk, start)
 
 	select {
-	case <-time.After(maxWatingTime):
-		bm.cond.Broadcast()
 	case pr := <-result:
 		return pr.buffer, pr.err
+	case <-time.After(maxWaitingTime):
+		bm.cond.Broadcast()
+		pr := <-result
+		return pr.buffer, pr.err
 	}
-
-	return nil, fmt.Errorf("cannot bin")
 }
 
-func (bm *BufferManager) pin(result chan<- pinResult, blk *file.BlockID) {
+func (bm *BufferManager) pin(result chan<- pinResult, blk *file.BlockID, start time.Time) {
 	bm.mux.Lock()
 	defer bm.mux.Unlock()
 
@@ -112,7 +113,7 @@ func (bm *BufferManager) pin(result chan<- pinResult, blk *file.BlockID) {
 		}
 	}
 
-	for b == nil {
+	for b == nil && !isWaitingTooLong(start) {
 		bm.cond.Wait()
 		b, err = bm.tryToPin(blk)
 		if err != nil {
@@ -174,4 +175,10 @@ func (bm *BufferManager) chooseUnpinnedBuffer() (*Buffer, error) {
 	}
 
 	return nil, errNotExistUnpin
+}
+
+func isWaitingTooLong(start time.Time) bool {
+	limit := start.Add(maxWaitingTime)
+
+	return time.Now().After(limit)
 }
