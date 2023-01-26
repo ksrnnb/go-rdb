@@ -1,12 +1,19 @@
 package logs
 
 import (
+	"os"
 	"testing"
 
 	"github.com/ksrnnb/go-rdb/file"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func initializeFiles(t *testing.T) {
+	t.Helper()
+	err := os.RemoveAll("../data")
+	require.NoError(t, err)
+}
 
 func newLogIterator(t *testing.T) *LogIterator {
 	t.Helper()
@@ -22,6 +29,7 @@ func newLogIterator(t *testing.T) *LogIterator {
 
 func newFileManager(t *testing.T) *file.FileManager {
 	t.Helper()
+	initializeFiles(t)
 	fm, err := file.NewFileManager("data", 400)
 
 	require.NoError(t, err)
