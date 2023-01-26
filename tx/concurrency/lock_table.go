@@ -51,8 +51,9 @@ func (lt *LockTable) SLock(blk *file.BlockID) error {
 		return result.err
 	case <-time.After(maxWaitingTime):
 		lt.cond.Broadcast()
+		result := <-lr
+		return result.err
 	}
-	return ErrLockAbort
 }
 
 func (lt *LockTable) sLock(lr chan<- lockResult, blk *file.BlockID, start time.Time) {
@@ -88,8 +89,9 @@ func (lt *LockTable) XLock(blk *file.BlockID) error {
 		return result.err
 	case <-time.After(maxWaitingTime):
 		lt.cond.Broadcast()
+		result := <-lr
+		return result.err
 	}
-	return nil
 }
 
 func (lt *LockTable) xLock(lr chan<- lockResult, blk *file.BlockID, start time.Time) {
