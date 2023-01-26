@@ -68,23 +68,26 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		res, _ := json.Marshal(values)
-		fmt.Fprint(w, string(res))
-	} else {
-		num, err := pe.ExecuteUpdate(req.Query, tx)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		fmt.Println("executed update")
 		err = tx.Commit()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, MakeMessageResponse("%d records has changed\n"), num)
+		res, _ := json.Marshal(values)
+		fmt.Fprint(w, string(res))
 		return
 	}
+	num, err := pe.ExecuteUpdate(req.Query, tx)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = tx.Commit()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	fmt.Fprintf(w, MakeMessageResponse("%d records has changed\n"), num)
 }
 
 func handleError(w http.ResponseWriter, r *http.Request, err error) {
