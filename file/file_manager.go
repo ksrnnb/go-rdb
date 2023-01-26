@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 )
 
@@ -175,12 +176,7 @@ func (fm *FileManager) getFile(filename string) (*os.File, error) {
 // createDirectoryIfNeeded()はディレクトリ名を引数にとり、
 // 兄弟となる階層にディレクトリが存在しなければ作成、存在すればパスを返す
 func createDirectoryIfNeeded(dirname string) (dbDirectory string, err error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	dbDirectory = filepath.Join(dir, "..", dirname)
+	dbDirectory = filepath.Join(ProjectRootDir(), dirname)
 
 	_, err = os.Stat(dbDirectory)
 	if os.IsNotExist(err) {
@@ -196,4 +192,10 @@ func createDirectoryIfNeeded(dirname string) (dbDirectory string, err error) {
 	}
 
 	return dbDirectory, nil
+}
+
+func ProjectRootDir() string {
+	_, file, _, _ := runtime.Caller(0)
+	currentDir := filepath.Dir(file)
+	return filepath.Join(currentDir, "..")
 }
