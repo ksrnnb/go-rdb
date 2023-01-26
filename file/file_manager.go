@@ -4,11 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 )
 
@@ -39,28 +37,6 @@ func NewFileManager(dirname string, bs int) (*FileManager, error) {
 		blockSize:   bs,
 		isNew:       isNew,
 		openFiles:   map[string]*os.File{},
-	}
-
-	// tempから始まるファイルは削除
-	// TODO: 消す
-	err = filepath.Walk(dbDirectory, func(path string, fi fs.FileInfo, err error) error {
-		if err != nil {
-			return fmt.Errorf("file: NewFileManager failed, %v", err)
-		}
-
-		if fi.IsDir() {
-			return nil
-		}
-
-		if strings.HasPrefix(fi.Name(), "temp") {
-			err = os.Remove(filepath.Join(fm.dbDirectory, path))
-		}
-
-		return err
-	})
-
-	if err != nil {
-		return nil, err
 	}
 
 	return fm, nil
@@ -199,7 +175,12 @@ func (fm *FileManager) getFile(filename string) (*os.File, error) {
 // createDirectoryIfNeeded()はディレクトリ名を引数にとり、
 // 兄弟となる階層にディレクトリが存在しなければ作成、存在すればパスを返す
 func createDirectoryIfNeeded(dirname string) (dbDirectory string, err error) {
-	dbDirectory = filepath.Join("./", dirname)
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	dbDirectory = filepath.Join(dir, "..", dirname)
 
 	_, err = os.Stat(dbDirectory)
 	if os.IsNotExist(err) {
