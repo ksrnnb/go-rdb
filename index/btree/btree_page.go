@@ -104,16 +104,16 @@ func (btp *BTreePage) Split(splitPos int, flag int) (*file.BlockID, error) {
 	return newBlk, err
 }
 
+func (btp *BTreePage) GetDataValue(slot int) (query.Constant, error) {
+	return btp.getVal(slot, index.IndexDataValueField)
+}
+
 func (btp *BTreePage) GetFlag() (int, error) {
 	return btp.tx.GetInt(btp.currentBlk, 0)
 }
 
 func (btp *BTreePage) SetFlag(flag int) error {
 	return btp.tx.SetInt(btp.currentBlk, flagPos, flag, true)
-}
-
-func (btp *BTreePage) GetDataValue(slot int) (query.Constant, error) {
-	return btp.getVal(slot, index.IndexDataValueField)
 }
 
 func (btp *BTreePage) AppendNew(flag int) (*file.BlockID, error) {
