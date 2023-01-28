@@ -59,7 +59,7 @@ func (ii *IndexInfo) calculateRecordsPerBlock() int {
 func createIndexLayout(tableSchema *record.Schema, fieldName string) (*record.Layout, error) {
 	schema := record.NewSchema()
 	schema.AddIntField(index.IndexIdField)
-	schema.AddIntField(index.IndexBlockField)
+	schema.AddIntField(index.IndexBlockNumberField)
 
 	ft, err := tableSchema.FieldType(fieldName)
 	if err != nil {

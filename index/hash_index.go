@@ -19,14 +19,6 @@ type HashIndex struct {
 
 const NumBuckets = 100
 
-// インデックスレコードがもつフィールドの定義
-const (
-	IndexIdField        = "id"
-	IndexBlockField     = "block"
-	IndexDataRidField   = "data_record_id"
-	IndexDataValueField = "data_value"
-)
-
 func NewHashIndex(tx *tx.Transaction, indexName string, layout *record.Layout) *HashIndex {
 	return &HashIndex{tx: tx, indexName: indexName, layout: layout}
 }
@@ -74,7 +66,7 @@ func (hi *HashIndex) GetDataRid() (*record.RecordID, error) {
 		return nil, errors.New("HashIndex doesn't have TableScan")
 	}
 
-	blknum, err := hi.ts.GetInt(IndexBlockField)
+	blknum, err := hi.ts.GetInt(IndexBlockNumberField)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +87,7 @@ func (hi *HashIndex) Insert(val query.Constant, rid *record.RecordID) error {
 		return err
 	}
 
-	err = hi.ts.SetInt(IndexBlockField, rid.BlockNumber())
+	err = hi.ts.SetInt(IndexBlockNumberField, rid.BlockNumber())
 	if err != nil {
 		return err
 	}

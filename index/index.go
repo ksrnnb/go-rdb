@@ -5,6 +5,14 @@ import (
 	"github.com/ksrnnb/go-rdb/record"
 )
 
+// インデックスレコードがもつフィールドの定義
+const (
+	IndexIdField          = "id"
+	IndexBlockNumberField = "block_number"
+	IndexDataRidField     = "data_record_id"
+	IndexDataValueField   = "data_value"
+)
+
 type Index interface {
 	Next() (bool, error)
 	BeforeFirst(searchKey query.Constant) error
