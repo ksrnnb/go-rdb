@@ -72,6 +72,10 @@ func (c Constant) IsGreaterThan(cc Constant) bool {
 	return c.CompareTo(cc) > 0
 }
 
+func (c Constant) IsLessThan(cc Constant) bool {
+	return c.CompareTo(cc) < 0
+}
+
 func (c Constant) String() string {
 	if c.ctype == IntConstant {
 		return strconv.Itoa(c.intVal)
