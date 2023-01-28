@@ -92,7 +92,8 @@ func (btd *BTreeDirectory) MakeNewRoot(de DirectoryEntry) error {
 	return btd.contents.SetFlag(level + 1)
 }
 
-// Insert はルートから開始して再帰的に tree を level-0 のディレクトリのブロックまで下る
+// Insert はルートから開始して再帰的に tree を level-0 のディレクトリのブロックまで下って
+// ディレクトリエントリを追加する
 func (btd *BTreeDirectory) Insert(de DirectoryEntry) (DirectoryEntry, error) {
 	level, err := btd.contents.GetFlag()
 	if err != nil {
