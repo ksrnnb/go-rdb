@@ -39,6 +39,8 @@ func (e Expression) AsFieldName() string {
 	return e.fieldName
 }
 
+// Evaluate は式を評価して、定数の場合はそのまま定数を返して
+// フィールド名の場合は、 Scanner から値を取得する
 func (e Expression) Evaluate(s Scanner) (Constant, error) {
 	if e.IsConstant() {
 		return e.val, nil
