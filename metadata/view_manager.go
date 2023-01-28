@@ -6,6 +6,14 @@ import (
 	"github.com/ksrnnb/go-rdb/tx"
 )
 
+// -------------------------------
+// |      view_categories        |
+// -------------------------------
+// | view_name       varchar(16) |
+// | view_definition varchar(16) |
+// | field_name      varchar(16) |
+// -------------------------------
+
 const MaxViewDefinitionLength = 100
 
 const viewCategoryTableName = "view_categories"

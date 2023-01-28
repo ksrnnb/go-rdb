@@ -7,6 +7,14 @@ import (
 	"github.com/ksrnnb/go-rdb/tx"
 )
 
+// --------------------------
+// |    index_categories    |
+// --------------------------
+// | index_name varchar(16) |
+// | table_name varchar(16) |
+// | field_name varchar(16) |
+// --------------------------
+
 const (
 	indexCategoryTableName = "index_categories"
 )

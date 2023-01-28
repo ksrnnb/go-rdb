@@ -8,6 +8,23 @@ import (
 	"github.com/ksrnnb/go-rdb/tx"
 )
 
+// --------------------------
+// |    table_categories    |
+// --------------------------
+// | table_name varchar(16) |
+// | slot_size  int         |
+// --------------------------
+
+// --------------------------
+// |    field_categories    |
+// --------------------------
+// | table_name varchar(16) |
+// | field_name varchar(16) |
+// | field_type int         |
+// | length     int         |
+// | offset     int         |
+// --------------------------
+
 const (
 	MaxFieldNameLength = 16
 	MaxTableNameLength = 16
