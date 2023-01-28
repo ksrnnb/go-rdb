@@ -69,7 +69,8 @@ func TestIndexRetrieval(t *testing.T) {
 	require.NoError(t, err)
 	ii, ok := indexes["major_id"]
 	require.True(t, ok)
-	idx := ii.Open()
+	idx, err := ii.Open()
+	require.NoError(t, err)
 
 	// Retrieve all index records having a data_value of 3
 	err = idx.BeforeFirst(query.NewConstant(3))
@@ -124,7 +125,9 @@ func TestIndexUpdate(t *testing.T) {
 	idxInfo, err := mdm.GetIndexInfo("student", tx)
 	require.NoError(t, err)
 	for fn, ii := range idxInfo {
-		indexes[fn] = ii.Open()
+		idx, err := ii.Open()
+		require.NoError(t, err)
+		indexes[fn] = idx
 	}
 
 	// Task1: insert a new student record for sam

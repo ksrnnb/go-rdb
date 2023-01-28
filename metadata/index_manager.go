@@ -39,8 +39,9 @@ func NewIndexInfo(indexName string, fieldName string, tableSchema *record.Schema
 	return &IndexInfo{indexName, fieldName, tx, tableSchema, indexLayout, si}, nil
 }
 
-func (ii *IndexInfo) Open() index.Index {
-	return index.NewHashIndex(ii.tx, ii.indexName, ii.indexLayout)
+func (ii *IndexInfo) Open() (index.Index, error) {
+	return index.NewHashIndex(ii.tx, ii.indexName, ii.indexLayout), nil
+	// return btree.NewBTreeIndex(ii.tx, ii.indexName, ii.indexLayout)
 }
 
 func (ii *IndexInfo) BlocksAccessed() int {

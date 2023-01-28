@@ -40,7 +40,10 @@ func (ijp *IndexJoinPlan) Open() (query.Scanner, error) {
 	if !ok {
 		return nil, errors.New("scanner must be table scan")
 	}
-	idx := ijp.ii.Open()
+	idx, err := ijp.ii.Open()
+	if err != nil {
+		return nil, err
+	}
 	return NewIndexJoinScan(s1, idx, ijp.joinField, ts)
 }
 

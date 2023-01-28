@@ -27,7 +27,10 @@ func (isp *IndexSelectPlan) Open() (query.Scanner, error) {
 	if !ok {
 		return nil, errors.New("scanner must be TableScan")
 	}
-	idx := isp.ii.Open()
+	idx, err := isp.ii.Open()
+	if err != nil {
+		return nil, err
+	}
 	return NewIndexSelectScan(ts, idx, isp.val)
 }
 
