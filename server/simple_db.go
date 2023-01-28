@@ -77,7 +77,7 @@ func NewSimpleDBWithMetadata(dirname string) *SimpleDB {
 	}
 
 	qp := planner.NewBasicQueryPlanner(mm)
-	up := planner.NewBasicUpdatePlanner(mm)
+	up := planner.NewIndexUpdatePlanner(mm)
 	db.pe = planner.NewPlanExecuter(qp, up)
 
 	err = tx.Commit()
