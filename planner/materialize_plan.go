@@ -3,7 +3,6 @@ package planner
 import (
 	"math"
 
-	"github.com/ksrnnb/go-rdb/materialization"
 	"github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/tx"
@@ -12,10 +11,10 @@ import (
 type MaterializePlan struct {
 	tx        *tx.Transaction
 	srcPlan   Planner
-	generator *materialization.NextTableNameGenerator
+	generator *NextTableNameGenerator
 }
 
-func NewMaterializePlan(tx *tx.Transaction, srcPlan Planner, generator *materialization.NextTableNameGenerator) *MaterializePlan {
+func NewMaterializePlan(tx *tx.Transaction, srcPlan Planner, generator *NextTableNameGenerator) *MaterializePlan {
 	return &MaterializePlan{tx, srcPlan, generator}
 }
 
@@ -23,7 +22,7 @@ func NewMaterializePlan(tx *tx.Transaction, srcPlan Planner, generator *material
 // TemporaryTable の scanner を返す
 func (mp *MaterializePlan) Open() (query.Scanner, error) {
 	schema := mp.srcPlan.Schema()
-	tempTable := materialization.NewTemporaryTable(mp.tx, schema, mp.generator)
+	tempTable := NewTemporaryTable(mp.tx, schema, mp.generator)
 	srcScanner, err := mp.srcPlan.Open()
 	if err != nil {
 		return nil, err
