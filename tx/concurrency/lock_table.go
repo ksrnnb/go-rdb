@@ -23,7 +23,6 @@ type Lock struct {
 }
 
 type LockTable struct {
-	mux   *sync.Mutex
 	cond  *sync.Cond
 	locks []*Lock
 }
@@ -33,10 +32,8 @@ type lockResult struct {
 }
 
 func NewLockTable() *LockTable {
-	mux := &sync.Mutex{}
 	return &LockTable{
-		mux:  mux,
-		cond: sync.NewCond(mux),
+		cond: sync.NewCond(&sync.Mutex{}),
 	}
 }
 
@@ -57,11 +54,8 @@ func (lt *LockTable) SLock(blk *file.BlockID) error {
 }
 
 func (lt *LockTable) sLock(lr chan<- lockResult, blk *file.BlockID, start time.Time) {
-	lt.mux.Lock()
-
-	defer func() {
-		lt.mux.Unlock()
-	}()
+	lt.cond.L.Lock()
+	defer lt.cond.L.Unlock()
 
 	for lt.hasXLock(blk) && !isWaitingTooLong(start) {
 		lt.cond.Wait()
@@ -95,11 +89,8 @@ func (lt *LockTable) XLock(blk *file.BlockID) error {
 }
 
 func (lt *LockTable) xLock(lr chan<- lockResult, blk *file.BlockID, start time.Time) {
-	lt.mux.Lock()
-
-	defer func() {
-		lt.mux.Unlock()
-	}()
+	lt.cond.L.Lock()
+	defer lt.cond.L.Unlock()
 
 	for lt.hasOtherSLocks(blk) && !isWaitingTooLong(start) {
 		lt.cond.Wait()
@@ -115,8 +106,8 @@ func (lt *LockTable) xLock(lr chan<- lockResult, blk *file.BlockID, start time.T
 }
 
 func (lt *LockTable) Unlock(blk *file.BlockID) {
-	lt.mux.Lock()
-	defer lt.mux.Unlock()
+	lt.cond.L.Lock()
+	defer lt.cond.L.Unlock()
 	val := lt.getLockVal(blk)
 
 	if lt.hasOtherSLocks(blk) {

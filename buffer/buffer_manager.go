@@ -18,7 +18,6 @@ var errNotExistUnpin = errors.New("unpin buffer doesn't exist")
 type BufferManager struct {
 	bufferPool   []*Buffer
 	numAvailable int
-	mux          *sync.Mutex
 	cond         *sync.Cond
 }
 
@@ -31,12 +30,10 @@ type pinResult struct {
 // bufferPoolはnumbuffs個のBufferが初期値となるため、全てunpin状態
 func NewBufferManager(fm *file.FileManager, lm *logs.LogManager, numbuffs int) *BufferManager {
 	bp := make([]*Buffer, numbuffs)
-	mux := &sync.Mutex{}
 	bm := &BufferManager{
 		bufferPool:   bp,
 		numAvailable: numbuffs,
-		mux:          mux,
-		cond:         sync.NewCond(mux),
+		cond:         sync.NewCond(&sync.Mutex{}),
 	}
 
 	for i := 0; i < numbuffs; i++ {
@@ -48,15 +45,15 @@ func NewBufferManager(fm *file.FileManager, lm *logs.LogManager, numbuffs int) *
 
 // unpin状態のバッファ数を返す
 func (bm *BufferManager) Available() int {
-	bm.mux.Lock()
-	defer bm.mux.Unlock()
+	bm.cond.L.Lock()
+	defer bm.cond.L.Unlock()
 	return bm.numAvailable
 }
 
 // トランザクションNo.が一致するバッファを全てディスクに書き込む
 func (bm *BufferManager) FlushAll(txnum int) error {
-	bm.mux.Lock()
-	defer bm.mux.Unlock()
+	bm.cond.L.Lock()
+	defer bm.cond.L.Unlock()
 	for _, b := range bm.bufferPool {
 		if b.ModifyingTx() == txnum {
 			err := b.flush()
@@ -71,8 +68,8 @@ func (bm *BufferManager) FlushAll(txnum int) error {
 
 // Unpin()は引数のBufferをunpinする
 func (bm *BufferManager) Unpin(b *Buffer) {
-	bm.mux.Lock()
-	defer bm.mux.Unlock()
+	bm.cond.L.Lock()
+	defer bm.cond.L.Unlock()
 	b.unpin()
 
 	if !b.IsPinned() {
@@ -102,8 +99,8 @@ func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
 }
 
 func (bm *BufferManager) pin(result chan<- pinResult, blk *file.BlockID, start time.Time) {
-	bm.mux.Lock()
-	defer bm.mux.Unlock()
+	bm.cond.L.Lock()
+	defer bm.cond.L.Unlock()
 
 	b, err := bm.tryToPin(blk)
 
