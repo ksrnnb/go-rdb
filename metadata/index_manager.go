@@ -86,7 +86,7 @@ func createIndexLayout(tableSchema *record.Schema, fieldName string) (*record.La
 		schema.AddStringField(index.IndexDataValueField, l)
 	}
 
-	return record.NewLayout(schema)
+	return record.NewLayout(schema), nil
 }
 
 type IndexManager struct {

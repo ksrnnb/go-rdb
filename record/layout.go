@@ -8,18 +8,16 @@ type Layout struct {
 	slotSize int
 }
 
-func NewLayout(s *Schema) (*Layout, error) {
+func NewLayout(s *Schema) *Layout {
 	offsets := make(map[string]int)
 	pos := IntByteSize
 	for _, fn := range s.Fields() {
 		offsets[fn] = pos
-		ofs, err := s.lengthInBytes(fn)
-		if err != nil {
-			return nil, err
-		}
+		// schema の field から取得しているのでエラーは起こり得ない
+		ofs, _ := s.lengthInBytes(fn)
 		pos += ofs
 	}
-	return &Layout{s, offsets, pos}, nil
+	return &Layout{s, offsets, pos}
 }
 
 func NewLayoutWithOffsets(s *Schema, offsets map[string]int, slotSize int) *Layout {

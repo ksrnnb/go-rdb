@@ -53,10 +53,7 @@ func NewTableManager(isNew bool, tx *tx.Transaction) (*TableManager, error) {
 	tcatSchema := record.NewSchema()
 	tcatSchema.AddStringField(tableNameField, MaxTableNameLength)
 	tcatSchema.AddIntField(slotSizeField)
-	tcatLayout, err := record.NewLayout(tcatSchema)
-	if err != nil {
-		return nil, err
-	}
+	tcatLayout := record.NewLayout(tcatSchema)
 
 	fcatSchema := record.NewSchema()
 	fcatSchema.AddStringField(tableNameField, MaxTableNameLength)
@@ -64,10 +61,7 @@ func NewTableManager(isNew bool, tx *tx.Transaction) (*TableManager, error) {
 	fcatSchema.AddIntField(fieldTypeField)
 	fcatSchema.AddIntField(lengthField)
 	fcatSchema.AddIntField(offsetField)
-	fcatLayout, err := record.NewLayout(fcatSchema)
-	if err != nil {
-		return nil, err
-	}
+	fcatLayout := record.NewLayout(fcatSchema)
 
 	tm := &TableManager{tcatLayout, fcatLayout}
 	if isNew {
@@ -85,11 +79,8 @@ func NewTableManager(isNew bool, tx *tx.Transaction) (*TableManager, error) {
 }
 
 func (tm *TableManager) CreateTable(tableName string, schema *record.Schema, tx *tx.Transaction) error {
-	layout, err := record.NewLayout(schema)
-	if err != nil {
-		return err
-	}
-	err = tm.createTableCategoryTable(tableName, tx, layout)
+	layout := record.NewLayout(schema)
+	err := tm.createTableCategoryTable(tableName, tx, layout)
 	if err != nil {
 		return err
 	}

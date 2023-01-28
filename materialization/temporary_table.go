@@ -13,16 +13,14 @@ type TemporaryTable struct {
 	layout    *record.Layout
 }
 
-func NewTemporaryTable(tx *tx.Transaction, schema *record.Schema, generator *NextTableNameGenerator) (*TemporaryTable, error) {
-	layout, err := record.NewLayout(schema)
-	if err != nil {
-		return nil, err
-	}
+func NewTemporaryTable(tx *tx.Transaction, schema *record.Schema, generator *NextTableNameGenerator) *TemporaryTable {
+	layout := record.NewLayout(schema)
+
 	return &TemporaryTable{
 		tx:        tx,
 		tableName: generator.NextTableName(),
 		layout:    layout,
-	}, nil
+	}
 }
 
 func (tt *TemporaryTable) Open() (query.UpdateScanner, error) {

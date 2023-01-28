@@ -167,11 +167,7 @@ func (bti *BTreeIndex) initializeDirectory() error {
 		return err
 	}
 
-	dirLayout, err := record.NewLayout(dirSchema)
-	if err != nil {
-		return err
-	}
-	bti.dirLayout = dirLayout
+	bti.dirLayout = record.NewLayout(dirSchema)
 	bti.rootBlk = file.NewBlockID(bti.dirTable, 0)
 
 	ds, err := bti.tx.Size(bti.dirTable)

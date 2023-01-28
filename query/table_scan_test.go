@@ -20,8 +20,7 @@ func TestTableScan(t *testing.T) {
 	schema := record.NewSchema()
 	schema.AddIntField("A")
 	schema.AddStringField("B", 9)
-	layout, err := record.NewLayout(schema)
-	require.NoError(t, err)
+	layout := record.NewLayout(schema)
 	for _, fn := range layout.Schema().Fields() {
 		ofs, err := layout.Offset(fn)
 		require.NoError(t, err)
