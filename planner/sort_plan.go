@@ -7,17 +7,17 @@ import (
 )
 
 type SortPlan struct {
-	p          Planner
 	tx         *tx.Transaction
+	p          Planner
 	schema     *record.Schema
 	comparator RecordComparator
 	generator  *NextTableNameGenerator
 }
 
-func NewSortPlan(p Planner, sortFields []string, tx *tx.Transaction, generator *NextTableNameGenerator) SortPlan {
-	return SortPlan{
-		p:          p,
+func NewSortPlan(tx *tx.Transaction, sortFields []string, p Planner, generator *NextTableNameGenerator) *SortPlan {
+	return &SortPlan{
 		tx:         tx,
+		p:          p,
 		schema:     p.Schema(),
 		comparator: NewRecordComparator(sortFields),
 	}
