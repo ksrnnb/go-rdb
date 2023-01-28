@@ -74,9 +74,6 @@ func (sm *StatisticManager) StatInfo(tableName string, layout *record.Layout, tx
 }
 
 func (sm *StatisticManager) refreshStatistics(tx *tx.Transaction) error {
-	sm.mux.Lock()
-	defer sm.mux.Unlock()
-
 	sm.tableStats = make(map[string]StatInfo)
 	sm.numCalls = 0
 
