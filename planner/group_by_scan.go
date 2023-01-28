@@ -47,7 +47,7 @@ func (gs *GroupByScan) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	hasMoreGroup, err := gs.Next()
+	hasMoreGroup, err := gs.scan.Next()
 	if err != nil {
 		return false, err
 	}
