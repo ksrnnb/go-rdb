@@ -31,16 +31,18 @@ func (btd *BTreeDirectory) Close() error {
 	return btd.contents.Close()
 }
 
+// Search はルートから開始して tree を level-0 のディレクトリのブロックまで下る
+// searchKey を含む leaf のブロック番号を返す
 func (btd *BTreeDirectory) Search(searchKey query.Constant) (int, error) {
 	childBlk, err := btd.findChildBlock(searchKey)
 	if err != nil {
 		return 0, err
 	}
-	flag, err := btd.contents.GetFlag()
+	level, err := btd.contents.GetFlag()
 	if err != nil {
 		return 0, err
 	}
-	for flag > 0 {
+	for level > 0 {
 		err := btd.contents.Close()
 		if err != nil {
 			return 0, err
@@ -54,16 +56,17 @@ func (btd *BTreeDirectory) Search(searchKey query.Constant) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		newFlag, err := btd.contents.GetFlag()
+		newLevel, err := btd.contents.GetFlag()
 		if err != nil {
 			return 0, err
 		}
-		flag = newFlag
+		level = newLevel
 	}
 
 	return childBlk.Number(), nil
 }
 
+// MakeNewRoot は root page への insert が non null だった場合に呼ばれる
 func (btd *BTreeDirectory) MakeNewRoot(de DirectoryEntry) error {
 	firstVal, err := btd.contents.GetDataValue(0)
 	if err != nil {
@@ -74,6 +77,9 @@ func (btd *BTreeDirectory) MakeNewRoot(de DirectoryEntry) error {
 		return err
 	}
 	newBlk, err := btd.contents.Split(0, level)
+	if err != nil {
+		return err
+	}
 	oldRoot := NewDirectoryEntry(firstVal, newBlk.Number())
 	_, err = btd.insertEntry(oldRoot)
 	if err != nil {
@@ -86,12 +92,13 @@ func (btd *BTreeDirectory) MakeNewRoot(de DirectoryEntry) error {
 	return btd.contents.SetFlag(level + 1)
 }
 
+// Insert はルートから開始して再帰的に tree を level-0 のディレクトリのブロックまで下る
 func (btd *BTreeDirectory) Insert(de DirectoryEntry) (DirectoryEntry, error) {
-	flag, err := btd.contents.GetFlag()
+	level, err := btd.contents.GetFlag()
 	if err != nil {
 		return emptyDir, err
 	}
-	if flag == 0 {
+	if level == 0 {
 		return btd.insertEntry(de)
 	}
 	childBlk, err := btd.findChildBlock(de.DataValue())
@@ -115,6 +122,8 @@ func (btd *BTreeDirectory) Insert(de DirectoryEntry) (DirectoryEntry, error) {
 	return btd.insertEntry(myEntry)
 }
 
+// insertEntry はページにディレクトリエントリを挿入する
+// 分割が発生した場合は新しいディレクトリエントリを返す
 func (btd *BTreeDirectory) insertEntry(de DirectoryEntry) (DirectoryEntry, error) {
 	n, err := btd.contents.FindSlotBefore(de.DataValue())
 	if err != nil {
@@ -133,6 +142,8 @@ func (btd *BTreeDirectory) insertEntry(de DirectoryEntry) (DirectoryEntry, error
 	if !isFull {
 		return emptyDir, nil
 	}
+
+	// full になったら分割する
 	level, err := btd.contents.GetFlag()
 	if err != nil {
 		return emptyDir, err
