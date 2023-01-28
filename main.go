@@ -44,6 +44,7 @@ func MakeMessageResponse(msg string) string {
 }
 
 func HandleQuery(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	tx, err := db.NewTransaction()
 	if err != nil {
 		handleError(w, r, err)
@@ -87,7 +88,7 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Fprintf(w, MakeMessageResponse("%d records has changed\n"), num)
+	fmt.Fprintf(w, MakeMessageResponse("%d records has changed"), num)
 }
 
 func handleError(w http.ResponseWriter, r *http.Request, err error) {
