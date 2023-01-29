@@ -1,6 +1,8 @@
 package planner
 
 import (
+	"errors"
+
 	"github.com/ksrnnb/go-rdb/metadata"
 	"github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/record"
@@ -41,7 +43,9 @@ func (tp *TablePlanner) MakeJoinPlan(currentPlan Planner) (Planner, error) {
 	currentSchema := currentPlan.Schema()
 	joinPred, err := tp.pred.JoinSubPredicate(tp.schema, currentSchema)
 	if err != nil {
-		return nil, err
+		if !errors.Is(err, query.ErrNoSubPredicate) {
+			return nil, err
+		}
 	}
 	if joinPred == nil {
 		return nil, nil
@@ -106,7 +110,9 @@ func (tp *TablePlanner) makeProductJoin(currentPlan Planner, currentSchema *reco
 func (tp *TablePlanner) addSelectPredicate(p Planner) (Planner, error) {
 	selectPred, err := tp.pred.SelectSubPredicate(tp.schema)
 	if err != nil {
-		return nil, err
+		if !errors.Is(err, query.ErrNoSubPredicate) {
+			return nil, err
+		}
 	}
 	if selectPred != nil {
 		return NewSelectPlan(p, selectPred), nil
@@ -117,7 +123,9 @@ func (tp *TablePlanner) addSelectPredicate(p Planner) (Planner, error) {
 func (tp *TablePlanner) addJoinPredicate(p Planner, currentSchema *record.Schema) (Planner, error) {
 	joinPred, err := tp.pred.JoinSubPredicate(currentSchema, tp.schema)
 	if err != nil {
-		return nil, err
+		if !errors.Is(err, query.ErrNoSubPredicate) {
+			return nil, err
+		}
 	}
 	if joinPred != nil {
 		return NewSelectPlan(p, joinPred), nil

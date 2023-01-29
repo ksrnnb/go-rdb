@@ -1,6 +1,7 @@
 package planner
 
 import (
+	"errors"
 	"math"
 
 	"github.com/ksrnnb/go-rdb/query"
@@ -24,6 +25,7 @@ func NewMultiBufferProductScan(tx *tx.Transaction, lhs query.Scanner, fileName s
 		layout:   layout,
 	}
 	var err error
+	// TODO: TemporaryTable だからファイルは生成されないはずでは？
 	ms.fileSize, err = tx.Size(fileName)
 	if err != nil {
 		return nil, err
@@ -44,6 +46,10 @@ func (ms *MultiBufferProductScan) BeforeFirst() error {
 }
 
 func (ms *MultiBufferProductScan) Next() (bool, error) {
+	if ms.prodScan == nil {
+		return false, errors.New("Next() failed: MultiBufferProductScan.prodScan is nil")
+	}
+
 	hasNext, err := ms.prodScan.Next()
 	if err != nil {
 		return false, err
