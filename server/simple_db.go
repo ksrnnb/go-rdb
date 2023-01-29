@@ -76,7 +76,7 @@ func NewSimpleDBWithMetadata(dirname string) *SimpleDB {
 		log.Fatalf("NewMetadataManager() failed, %v", err)
 	}
 
-	qp := planner.NewBasicQueryPlanner(mm)
+	qp := planner.NewHeuristicQueryPlanner(mm, planner.NewNextTableNameGenerator())
 	up := planner.NewIndexUpdatePlanner(mm)
 	db.pe = planner.NewPlanExecuter(qp, up)
 
