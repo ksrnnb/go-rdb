@@ -31,7 +31,7 @@ func (ps *ProductPlan) Open() (query.Scanner, error) {
 	if err != nil {
 		return nil, err
 	}
-	s2, err := ps.p1.Open()
+	s2, err := ps.p2.Open()
 	if err != nil {
 		return nil, err
 	}
