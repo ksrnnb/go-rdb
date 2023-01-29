@@ -107,6 +107,7 @@ func (bm *BufferManager) pin(result chan<- pinResult, blk *file.BlockID, start t
 	if err != nil {
 		if !errors.Is(err, errNotExistUnpin) {
 			result <- pinResult{nil, fmt.Errorf("buffer(): Pin() failed, %w", err)}
+			return
 		}
 	}
 
@@ -115,6 +116,7 @@ func (bm *BufferManager) pin(result chan<- pinResult, blk *file.BlockID, start t
 		b, err = bm.tryToPin(blk)
 		if err != nil {
 			result <- pinResult{nil, fmt.Errorf("buffer(): Pin() failed, %w", err)}
+			return
 		}
 	}
 
