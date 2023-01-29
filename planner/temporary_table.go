@@ -7,6 +7,7 @@ import (
 )
 
 // TemporaryTable は TableManager の CreateTable メソッドでは生成されない
+// ファイル自体は生成される。適当なタイミングで削除される。
 type TemporaryTable struct {
 	tx        *tx.Transaction
 	tableName string

@@ -21,7 +21,7 @@ type ChunkScan struct {
 	currentSlot   int
 }
 
-func NewChunkScan(tx *tx.Transaction, fileName string, layout *record.Layout, startBlkNum int, endBlkNum int) *ChunkScan {
+func NewChunkScan(tx *tx.Transaction, fileName string, layout *record.Layout, startBlkNum int, endBlkNum int) (*ChunkScan, error) {
 	cs := &ChunkScan{
 		tx:          tx,
 		fileName:    fileName,
@@ -30,13 +30,18 @@ func NewChunkScan(tx *tx.Transaction, fileName string, layout *record.Layout, st
 		endBlkNum:   endBlkNum,
 	}
 	buffers := make([]*record.RecordPage, 0)
+
 	for i := startBlkNum; i <= endBlkNum; i++ {
 		blk := file.NewBlockID(fileName, i)
-		buffers = append(buffers, record.NewRecordPage(tx, blk, layout))
+		rp, err := record.NewRecordPage(tx, blk, layout)
+		if err != nil {
+			return nil, err
+		}
+		buffers = append(buffers, rp)
 	}
 	cs.buffers = buffers
 	cs.moveToBlock(startBlkNum)
-	return cs
+	return cs, nil
 }
 
 func (cs *ChunkScan) Close() error {

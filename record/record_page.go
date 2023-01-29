@@ -20,9 +20,12 @@ type RecordPage struct {
 	layout *Layout
 }
 
-func NewRecordPage(tx *tx.Transaction, blk *file.BlockID, layout *Layout) *RecordPage {
-	tx.Pin(blk)
-	return &RecordPage{tx, blk, layout}
+func NewRecordPage(tx *tx.Transaction, blk *file.BlockID, layout *Layout) (*RecordPage, error) {
+	err := tx.Pin(blk)
+	if err != nil {
+		return nil, err
+	}
+	return &RecordPage{tx, blk, layout}, nil
 }
 
 // GetInt は指定されたレコードの指定されたフィールドの値を取得する

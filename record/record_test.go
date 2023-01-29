@@ -32,7 +32,8 @@ func TestRecordPage(t *testing.T) {
 	err = tx.Pin(blk)
 	require.NoError(t, err)
 
-	rp := record.NewRecordPage(tx, blk, layout)
+	rp, err := record.NewRecordPage(tx, blk, layout)
+	require.NoError(t, err)
 	rp.Format()
 
 	fmt.Println("Filling the page with random records.")

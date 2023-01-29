@@ -99,7 +99,11 @@ func (ms *MultiBufferProductScan) useNextChunk() (bool, error) {
 		end = ms.fileSize - 1
 	}
 
-	ms.rhs = NewChunkScan(ms.tx, ms.fileName, ms.layout, ms.nextBlkNum, end)
+	rhs, err := NewChunkScan(ms.tx, ms.fileName, ms.layout, ms.nextBlkNum, end)
+	if err != nil {
+		return false, err
+	}
+	ms.rhs = rhs
 	if err := ms.lhs.BeforeFirst(); err != nil {
 		return false, err
 	}

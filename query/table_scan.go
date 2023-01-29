@@ -194,7 +194,12 @@ func (ts *TableScan) MoveToRid(rid *record.RecordID) error {
 		return err
 	}
 	blk := file.NewBlockID(ts.fileName, rid.BlockNumber())
-	ts.rp = record.NewRecordPage(ts.tx, blk, ts.layout)
+
+	rp, err := record.NewRecordPage(ts.tx, blk, ts.layout)
+	if err != nil {
+		return err
+	}
+	ts.rp = rp
 	ts.currentSlot = rid.Slot()
 	return nil
 }
@@ -210,10 +215,11 @@ func (ts *TableScan) moveToBlock(blknum int) error {
 	}
 
 	blk := file.NewBlockID(ts.fileName, blknum)
-	ts.rp = record.NewRecordPage(ts.tx, blk, ts.layout)
+	rp, err := record.NewRecordPage(ts.tx, blk, ts.layout)
 	if err != nil {
 		return err
 	}
+	ts.rp = rp
 
 	ts.currentSlot = -1
 	return nil
@@ -230,7 +236,11 @@ func (ts *TableScan) moveToNewBlock() error {
 		return err
 	}
 
-	ts.rp = record.NewRecordPage(ts.tx, blk, ts.layout)
+	rp, err := record.NewRecordPage(ts.tx, blk, ts.layout)
+	if err != nil {
+		return err
+	}
+	ts.rp = rp
 	err = ts.rp.Format()
 	if err != nil {
 		return err
