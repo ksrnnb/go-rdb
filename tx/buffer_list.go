@@ -116,7 +116,7 @@ func (bl *BufferList) removeTxBuffer(blk *file.BlockID) {
 			continue
 		}
 		if txBuf.blk.Equals(blk) {
-			copy(bl.txBuffers[:i], bl.txBuffers[:i+1])
+			copy(bl.txBuffers[i:], bl.txBuffers[i+1:])
 			bl.txBuffers[len(bl.txBuffers)-1] = nil
 			bl.txBuffers = bl.txBuffers[:len(bl.txBuffers)-1]
 		}
