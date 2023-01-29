@@ -1,7 +1,7 @@
 # go-rdb
 
 # How to use
-Start Database with the following command.
+Start Database with the following command. Data is stored in simpledb directory.
 
 ```bash
 go run main.go
@@ -11,7 +11,14 @@ Then in other terminal, you can execute SQL using curl command.
 
 ## Create table
 ```bash
-$ curl -s localhost:8888 -d "{\"query\": \"CREATE TABLE users (id int, name varchar(16))\"}" | jq
+$ curl -s localhost:8888 -d "{\"query\": \"CREATE TABLE users (uid int, name varchar(16))\"}" | jq
+# {
+#   "message": "0 records has changed"
+# }
+```
+
+```bash
+$ curl -s localhost:8888 -d "{\"query\": \"CREATE TABLE profiles (pid int, user_id int, address varchar(16))\"}" | jq
 # {
 #   "message": "0 records has changed"
 # }
@@ -19,15 +26,22 @@ $ curl -s localhost:8888 -d "{\"query\": \"CREATE TABLE users (id int, name varc
 
 ## Insert data
 ```bash
-$ curl -s localhost:8888 -d "{\"query\": \"INSERT INTO users (id, name) VALUES (1, 'hoge')\"}" | jq
+$ curl -s localhost:8888 -d "{\"query\": \"INSERT INTO users (uid, name) VALUES (1, 'hoge')\"}" | jq
 # {
 #   "message": "1 records has changed"
 # }
 ```
 
-## Update field
 ```bash
-$ curl -s localhost:8888 -d "{\"query\": \"UPDATE users SET name='piyopiyo' WHERE id=1\"}" | jq
+$ curl -s localhost:8888 -d "{\"query\": \"INSERT INTO profiles (pid, user_id, address) VALUES (1, 1, 'Tokyo')\"}" | jq
+# {
+#   "message": "1 records has changed"
+# }
+```
+
+## Update data
+```bash
+$ curl -s localhost:8888 -d "{\"query\": \"UPDATE users SET name='piyopiyo' WHERE uid=1\"}" | jq
 # {
 #   "message": "1 records has changed"
 # }
@@ -35,18 +49,32 @@ $ curl -s localhost:8888 -d "{\"query\": \"UPDATE users SET name='piyopiyo' WHER
 
 ## Select data
 ```bash
-$ curl -s localhost:8888 -d "{\"query\": \"SELECT id, name FROM users\"}" | jq
+$ curl -s localhost:8888 -d "{\"query\": \"SELECT uid, name FROM users\"}" | jq
 # [
 #   {
-#     "id": 1,
+#     "uid": 1,
 #     "name": "piyopiyo"
 #   },
 # ]
 ```
 
+## Join data
+```bash
+$ curl -s localhost:8888 -d "{\"query\": \"SELECT uid, name, pid, user_id, address FROM users, profiles WHERE uid=user_id\"}" | jq
+# [
+#   {
+#     "address": "Tokyo",
+#     "name": "piyopiyo",
+#     "pid": 1,
+#     "uid": 1,
+#     "user_id": 1
+#   }
+# ]
+```
+
 ## Delete records
 ```bash
-$ curl -s localhost:8888 -d "{\"query\": \"DELETE FROM users WHERE id=1\"}" | jq
+$ curl -s localhost:8888 -d "{\"query\": \"DELETE FROM users WHERE uid=1\"}" | jq
 # {
 #   "message": "1 records has changed"
 # }
