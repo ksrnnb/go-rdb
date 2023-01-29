@@ -24,8 +24,6 @@ func initializeFiles(t *testing.T) {
 func TestMetadataManager(t *testing.T) {
 	initializeFiles(t)
 
-	err := os.RemoveAll("../data")
-	require.NoError(t, err)
 	db := server.NewSimpleDB("data", 400, 8)
 	tx, err := db.NewTransaction()
 	require.NoError(t, err)
@@ -84,6 +82,9 @@ func TestMetadataManager(t *testing.T) {
 	fmt.Printf("R(MyTable) = %d\n", si.RecordsOutput())
 	fmt.Printf("V(MyTable, A) = %d\n", si.DistinctValues("A"))
 	fmt.Printf("V(MyTable, B) = %d\n", si.DistinctValues("B"))
+
+	err = tx.Commit()
+	require.NoError(t, err)
 
 	// Part3: View Metadata
 	definition := "select B from MyTable where A = 1"
