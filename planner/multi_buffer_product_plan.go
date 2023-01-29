@@ -1,6 +1,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/record"
 	"github.com/ksrnnb/go-rdb/tx"
@@ -34,7 +36,7 @@ func (mp *MultiBufferProductPlan) Open() (query.Scanner, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewMultiBufferProductScan(mp.tx, leftScan, tt.TableName(), tt.Layout())
+	return NewMultiBufferProductScan(mp.tx, leftScan, fmt.Sprintf("%s.tbl", tt.TableName()), tt.Layout())
 }
 
 func (mp *MultiBufferProductPlan) BlocksAccessed() int {

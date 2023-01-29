@@ -25,8 +25,7 @@ func NewMultiBufferProductScan(tx *tx.Transaction, lhs query.Scanner, fileName s
 		layout:   layout,
 	}
 	var err error
-	// TODO: TemporaryTable だからファイルは生成されないはずでは？
-	ms.fileSize, err = tx.Size(fileName)
+	ms.fileSize, err = tx.Size(ms.fileName)
 	if err != nil {
 		return nil, err
 	}
