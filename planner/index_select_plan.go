@@ -14,7 +14,7 @@ type IndexSelectPlan struct {
 	val query.Constant
 }
 
-func NewIndexSelectPlanner(p Planner, ii *metadata.IndexInfo, val query.Constant) *IndexSelectPlan {
+func NewIndexSelectPlan(p Planner, ii *metadata.IndexInfo, val query.Constant) *IndexSelectPlan {
 	return &IndexSelectPlan{p, ii, val}
 }
 
