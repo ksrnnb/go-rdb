@@ -71,36 +71,35 @@ func TestPlanExecuter(t *testing.T) {
 	err = s.Close()
 	require.NoError(t, err)
 
-	// // select with join
-	// sjq := "select sid, sname, gradyear, pid, student_id, address from student, profile where sid=student_id"
-	// p, err = pe.CreateQueryPlan(sjq, tx)
-	// require.NoError(t, err)
-	// s, err = p.Open()
-	// require.NoError(t, err)
-	// require.NoError(t, s.BeforeFirst())
-	// fmt.Printf("scan type: %T\n", s)
-	// hasNext, err = s.Next()
-	// require.NoError(t, err)
-	// for hasNext {
-	// 	sid, err := s.GetInt("sid")
-	// 	require.NoError(t, err)
-	// 	sname, err := s.GetString("sname")
-	// 	require.NoError(t, err)
-	// 	gradYear, err := s.GetInt("gradyear")
-	// 	require.NoError(t, err)
-	// 	pid, err := s.GetInt("pid")
-	// 	require.NoError(t, err)
-	// 	studentId, err := s.GetInt("student_id")
-	// 	require.NoError(t, err)
-	// 	address, err := s.GetString("address")
-	// 	require.NoError(t, err)
-	// 	fmt.Printf("sid: %d, sname: %s, gradyear:%d, pid: %d, student_id: %d, address: %s\n", sid, sname, gradYear, pid, studentId, address)
-	// 	newHasNext, err := s.Next()
-	// 	require.NoError(t, err)
-	// 	hasNext = newHasNext
-	// }
-	// err = s.Close()
-	// require.NoError(t, err)
+	// select with join
+	sjq := "select sid, sname, gradyear, pid, student_id, address from student, profile where sid=student_id"
+	p, err = pe.CreateQueryPlan(sjq, tx)
+	require.NoError(t, err)
+	s, err = p.Open()
+	require.NoError(t, err)
+	require.NoError(t, s.BeforeFirst())
+	hasNext, err = s.Next()
+	require.NoError(t, err)
+	for hasNext {
+		sid, err := s.GetInt("sid")
+		require.NoError(t, err)
+		sname, err := s.GetString("sname")
+		require.NoError(t, err)
+		gradYear, err := s.GetInt("gradyear")
+		require.NoError(t, err)
+		pid, err := s.GetInt("pid")
+		require.NoError(t, err)
+		studentId, err := s.GetInt("student_id")
+		require.NoError(t, err)
+		address, err := s.GetString("address")
+		require.NoError(t, err)
+		fmt.Printf("sid: %d, sname: %s, gradyear:%d, pid: %d, student_id: %d, address: %s\n", sid, sname, gradYear, pid, studentId, address)
+		newHasNext, err := s.Next()
+		require.NoError(t, err)
+		hasNext = newHasNext
+	}
+	err = s.Close()
+	require.NoError(t, err)
 
 	// Part4: Create Index
 	iq := "create index student_sid_idx on student (sid)"
