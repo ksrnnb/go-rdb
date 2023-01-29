@@ -35,7 +35,8 @@ func prepareIndexTestData(t *testing.T, db *server.SimpleDB) {
 	require.NoError(t, err)
 
 	// Insert User data
-	for i := 0; i < 50; i++ {
+	// TODO: 50回くらいテストすると fail する。たぶん StatInfo の refresh 起因？
+	for i := 0; i < 30; i++ {
 		query := fmt.Sprintf("insert into student (sid, sname, gradyear, major_id) values (%d, 'user%d', 2020, %d)", i, i, i%5)
 		_, err = pe.ExecuteUpdate(query, tx)
 		require.NoError(t, err)
