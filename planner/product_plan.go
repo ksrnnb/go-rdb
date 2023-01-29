@@ -18,7 +18,7 @@ func NewProductPlan(p1 Planner, p2 Planner) (*ProductPlan, error) {
 	if err != nil {
 		return nil, err
 	}
-	ps.schema.AddAll(p2.Schema())
+	err = ps.schema.AddAll(p2.Schema())
 	if err != nil {
 		return nil, err
 	}
