@@ -157,6 +157,11 @@ func (im *IndexManager) IndexInfo(tableName string, tx *tx.Transaction) (map[str
 			return nil, err
 		}
 		if tn != tableName {
+			newHasNext, err := ts.Next()
+			if err != nil {
+				return nil, err
+			}
+			hasNext = newHasNext
 			continue
 		}
 		indexName, err := ts.GetString(indexNameField)
