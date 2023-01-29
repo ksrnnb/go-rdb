@@ -81,8 +81,8 @@ func (bl *BufferList) unpinAll() error {
 		bl.bm.Unpin(txBuf.buf)
 	}
 
-	bl.txBuffers = nil
-	bl.pins = nil
+	bl.txBuffers = make([]*txBuffer, 0)
+	bl.pins = make([]*file.BlockID, 0)
 	return nil
 }
 
@@ -96,9 +96,7 @@ func (bl *BufferList) removePin(blk *file.BlockID) {
 }
 
 func (bl *BufferList) dispatchRemovePin(blk *file.BlockID, index int) {
-	copy(bl.pins[index:], bl.pins[index+1:])
-	bl.pins[len(bl.pins)-1] = nil
-	bl.pins = bl.pins[:len(bl.pins)-1]
+	bl.pins = append(bl.pins[:index], bl.pins[index+1:]...)
 }
 
 func (bl *BufferList) containsPin(blk *file.BlockID) bool {
@@ -113,13 +111,9 @@ func (bl *BufferList) containsPin(blk *file.BlockID) bool {
 
 func (bl *BufferList) removeTxBuffer(blk *file.BlockID) {
 	for i, txBuf := range bl.txBuffers {
-		if txBuf == nil {
-			continue
-		}
 		if txBuf.blk.Equals(blk) {
-			copy(bl.txBuffers[i:], bl.txBuffers[i+1:])
-			bl.txBuffers[len(bl.txBuffers)-1] = nil
-			bl.txBuffers = bl.txBuffers[:len(bl.txBuffers)-1]
+			bl.txBuffers = append(bl.txBuffers[:i], bl.txBuffers[i+1:]...)
+			return
 		}
 	}
 }
