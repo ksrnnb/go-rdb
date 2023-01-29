@@ -46,6 +46,7 @@ func (bl *BufferList) pin(blk *file.BlockID) error {
 	}
 
 	bl.txBuffers = append(bl.txBuffers, newTxBuffer(blk, buf))
+	bl.pins = append(bl.pins, blk)
 	return nil
 }
 
@@ -95,7 +96,7 @@ func (bl *BufferList) removePin(blk *file.BlockID) {
 }
 
 func (bl *BufferList) dispatchRemovePin(blk *file.BlockID, index int) {
-	copy(bl.pins[:index], bl.pins[:index+1])
+	copy(bl.pins[index:], bl.pins[index+1:])
 	bl.pins[len(bl.pins)-1] = nil
 	bl.pins = bl.pins[:len(bl.pins)-1]
 }
