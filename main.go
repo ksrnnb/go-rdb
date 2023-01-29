@@ -7,13 +7,16 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/ksrnnb/go-rdb/parser"
 	"github.com/ksrnnb/go-rdb/planner"
 	q "github.com/ksrnnb/go-rdb/query"
 	"github.com/ksrnnb/go-rdb/server"
+	"github.com/ksrnnb/go-rdb/tx"
 )
 
 var db *server.SimpleDB
+var txns = make(map[string]*tx.Transaction)
 
 func main() {
 	db = server.NewSimpleDBWithMetadata("simpledb")
@@ -25,12 +28,28 @@ func main() {
 }
 
 type QueryRequest struct {
-	Query string `json:"query"`
+	Query         string `json:"query"`
+	TransactionID string `json:"transaction_id"`
 }
 
 func (qr QueryRequest) IsSelect() bool {
 	q := strings.ToLower(qr.Query)
 	return strings.HasPrefix(q, "select")
+}
+
+func (qr QueryRequest) IsStartTransaction() bool {
+	q := strings.ToLower(qr.Query)
+	return q == "start transaction" || q == "begin"
+}
+
+func (qr QueryRequest) IsInTransaction() bool {
+	_, ok := txns[qr.TransactionID]
+	return ok
+}
+
+func (qr QueryRequest) IsCommit() bool {
+	q := strings.ToLower(qr.Query)
+	return q == "commit"
 }
 
 type MessageResponse struct {
@@ -45,18 +64,53 @@ func MakeMessageResponse(msg string) string {
 
 func HandleQuery(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	tx, err := db.NewTransaction()
-	if err != nil {
-		handleError(w, r, err)
-		return
-	}
 
 	var req QueryRequest
-	err = json.NewDecoder(r.Body).Decode(&req)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	if req.IsCommit() {
+		tx := txns[req.TransactionID]
+		if err := tx.Commit(); err != nil {
+			handleError(w, r, err)
+			return
+		}
+
+		delete(txns, req.TransactionID)
+		fmt.Fprint(w, MakeMessageResponse("Commit!!"))
+		return
+	}
+
+	if req.IsStartTransaction() {
+		tx, err := db.NewTransaction()
+		if err != nil {
+			handleError(w, r, err)
+			return
+		}
+		tid := generateTransactionID()
+		txns[tid] = tx
+		res := make(map[string]string)
+		res["transaction_id"] = tid
+		res["message"] = "start transaction"
+		b, _ := json.Marshal(res)
+		fmt.Fprint(w, string(b))
+		return
+	}
+
+	var tx *tx.Transaction
+	if req.IsInTransaction() {
+		tx = txns[req.TransactionID]
+	} else {
+		tx, err = db.NewTransaction()
+		if err != nil {
+			handleError(w, r, err)
+			return
+		}
+	}
+
 	pe := db.PlanExecuter()
 	if req.IsSelect() {
 		p, err := pe.CreateQueryPlan(req.Query, tx)
@@ -69,10 +123,11 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		err = tx.Commit()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
+		if !req.IsInTransaction() {
+			if err := tx.Commit(); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 		}
 		res, _ := json.Marshal(values)
 		fmt.Fprint(w, string(res))
@@ -83,10 +138,12 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = tx.Commit()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	if !req.IsInTransaction() {
+		err = tx.Commit()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
 	fmt.Fprintf(w, MakeMessageResponse("%d records has changed"), num)
 }
@@ -140,4 +197,8 @@ func selectValues(pl planner.Planner, query string) ([]map[string]interface{}, e
 		return nil, err
 	}
 	return values, err
+}
+
+func generateTransactionID() string {
+	return uuid.New().String()
 }
