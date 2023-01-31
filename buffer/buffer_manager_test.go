@@ -20,7 +20,7 @@ func newBufferManager(t *testing.T) *BufferManager {
 	return db.BufferManager()
 }
 
-func blockID(t *testing.T, filename string, blkNum int) *file.BlockID {
+func blockID(t *testing.T, filename string, blkNum int) file.BlockID {
 	t.Helper()
 	return file.NewBlockID(filename, blkNum)
 }

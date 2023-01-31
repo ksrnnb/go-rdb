@@ -18,7 +18,7 @@ type SetStringRecord struct {
 	txnum  int
 	offset int
 	val    string
-	blk    *file.BlockID
+	blk    file.BlockID
 }
 
 func NewSetStringRecord(p *file.Page) (*SetStringRecord, error) {
@@ -83,7 +83,7 @@ func (ssr *SetStringRecord) String() string {
 		" " + strconv.Itoa(ssr.offset) + " " + ssr.val + ">"
 }
 
-func writeSetStringToLog(lm *logs.LogManager, txnum int, blk *file.BlockID, offset int, val string) (latestLSN int, err error) {
+func writeSetStringToLog(lm *logs.LogManager, txnum int, blk file.BlockID, offset int, val string) (latestLSN int, err error) {
 	tpos := intByteSize
 	fpos := tpos + intByteSize
 	bpos := fpos + file.MaxLengthInString(blk.FileName())

@@ -8,23 +8,37 @@ import (
 	"github.com/ksrnnb/go-rdb/file"
 )
 
-const maxWaitingTime = 10 * time.Second
-
-const (
-	xLocked  = -1
-	unlocked = 0
-)
+const maxWaitingTime = 60 * time.Second
 
 var ErrLockAbort = errors.New("concurrency: lock abort error")
 
 type Lock struct {
-	blk *file.BlockID
+	blk file.BlockID
 	val int // -1 is xLocked, over 1 is sLocked number, 0 is unlocked
+}
+
+type LockStatus int
+
+const (
+	XLocked  = -1
+	Unlocked = 0
+)
+
+func (ls LockStatus) UnlockSLock() LockStatus {
+	return ls - 1
+}
+
+func (ls LockStatus) SLock() LockStatus {
+	return ls + 1
+}
+
+func (ls LockStatus) IsSLocked() bool {
+	return ls > 1
 }
 
 type LockTable struct {
 	cond  *sync.Cond
-	locks []*Lock
+	locks map[file.BlockID]LockStatus
 }
 
 type lockResult struct {
@@ -33,11 +47,12 @@ type lockResult struct {
 
 func NewLockTable() *LockTable {
 	return &LockTable{
-		cond: sync.NewCond(&sync.Mutex{}),
+		cond:  sync.NewCond(&sync.Mutex{}),
+		locks: make(map[file.BlockID]LockStatus),
 	}
 }
 
-func (lt *LockTable) SLock(blk *file.BlockID) error {
+func (lt *LockTable) SLock(blk file.BlockID) error {
 	start := time.Now()
 
 	lr := make(chan lockResult)
@@ -53,7 +68,7 @@ func (lt *LockTable) SLock(blk *file.BlockID) error {
 	}
 }
 
-func (lt *LockTable) sLock(lr chan<- lockResult, blk *file.BlockID, start time.Time) {
+func (lt *LockTable) sLock(lr chan<- lockResult, blk file.BlockID, start time.Time) {
 	lt.cond.L.Lock()
 	defer lt.cond.L.Unlock()
 
@@ -66,12 +81,12 @@ func (lt *LockTable) sLock(lr chan<- lockResult, blk *file.BlockID, start time.T
 		return
 	}
 
-	val := lt.getLockVal(blk)
-	lt.setLockVal(blk, val+1)
+	l := lt.getLockStatus(blk)
+	lt.setLockStatus(blk, l.SLock())
 	lr <- lockResult{}
 }
 
-func (lt *LockTable) XLock(blk *file.BlockID) error {
+func (lt *LockTable) XLock(blk file.BlockID) error {
 	start := time.Now()
 	lr := make(chan lockResult)
 	defer close(lr)
@@ -88,7 +103,7 @@ func (lt *LockTable) XLock(blk *file.BlockID) error {
 	}
 }
 
-func (lt *LockTable) xLock(lr chan<- lockResult, blk *file.BlockID, start time.Time) {
+func (lt *LockTable) xLock(lr chan<- lockResult, blk file.BlockID, start time.Time) {
 	lt.cond.L.Lock()
 	defer lt.cond.L.Unlock()
 
@@ -101,17 +116,17 @@ func (lt *LockTable) xLock(lr chan<- lockResult, blk *file.BlockID, start time.T
 		return
 	}
 
-	lt.setLockVal(blk, xLocked)
+	lt.setLockStatus(blk, XLocked)
 	lr <- lockResult{}
 }
 
-func (lt *LockTable) Unlock(blk *file.BlockID) {
+func (lt *LockTable) Unlock(blk file.BlockID) {
 	lt.cond.L.Lock()
 	defer lt.cond.L.Unlock()
-	val := lt.getLockVal(blk)
+	ls := lt.getLockStatus(blk)
 
 	if lt.hasOtherSLocks(blk) {
-		lt.setLockVal(blk, val-1)
+		lt.setLockStatus(blk, ls.UnlockSLock())
 	} else {
 		// slock が1個だけ or xlock の場合
 		lt.deleteLock(blk)
@@ -119,46 +134,30 @@ func (lt *LockTable) Unlock(blk *file.BlockID) {
 	}
 }
 
-func (lt *LockTable) hasXLock(blk *file.BlockID) bool {
-	return lt.getLockVal(blk) == xLocked
+func (lt *LockTable) hasXLock(blk file.BlockID) bool {
+	return lt.getLockStatus(blk) == XLocked
 }
 
 // hasOtherSLocks は、他の concurrency manager も slock しているかどうかを返す
-func (lt *LockTable) hasOtherSLocks(blk *file.BlockID) bool {
-	return lt.getLockVal(blk) > 1
+func (lt *LockTable) hasOtherSLocks(blk file.BlockID) bool {
+	return lt.getLockStatus(blk).IsSLocked()
 }
 
-func (lt *LockTable) getLockVal(blk *file.BlockID) int {
-	for _, lock := range lt.locks {
-		if blk.Equals(lock.blk) {
-			return lock.val
-		}
+func (lt *LockTable) getLockStatus(blk file.BlockID) LockStatus {
+	st, ok := lt.locks[blk]
+	if ok {
+		return st
 	}
-
-	return unlocked
+	return Unlocked
 }
 
-func (lt *LockTable) setLockVal(blk *file.BlockID, val int) {
-	for i, lock := range lt.locks {
-		if blk.Equals(lock.blk) {
-			lock.val = val
-			lt.locks[i] = lock
-			return
-		}
-	}
-	lt.locks = append(lt.locks, &Lock{blk: blk, val: val})
+func (lt *LockTable) setLockStatus(blk file.BlockID, ls LockStatus) {
+	lt.locks[blk] = ls
 }
 
 // deleteLock() delete specified block
-func (lt *LockTable) deleteLock(blk *file.BlockID) {
-	var locks []*Lock
-	for _, lock := range lt.locks {
-		if blk.Equals(lock.blk) {
-			continue
-		}
-		locks = append(locks, lock)
-	}
-	lt.locks = locks
+func (lt *LockTable) deleteLock(blk file.BlockID) {
+	delete(lt.locks, blk)
 }
 
 func isWaitingTooLong(start time.Time) bool {

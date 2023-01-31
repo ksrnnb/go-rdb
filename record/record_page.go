@@ -16,11 +16,11 @@ const (
 
 type RecordPage struct {
 	tx     *tx.Transaction
-	blk    *file.BlockID
+	blk    file.BlockID
 	layout *Layout
 }
 
-func NewRecordPage(tx *tx.Transaction, blk *file.BlockID, layout *Layout) (*RecordPage, error) {
+func NewRecordPage(tx *tx.Transaction, blk file.BlockID, layout *Layout) (*RecordPage, error) {
 	err := tx.Pin(blk)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (rp *RecordPage) InsertAfter(slot int) (int, error) {
 	return newSlot, nil
 }
 
-func (rp *RecordPage) Block() *file.BlockID {
+func (rp *RecordPage) Block() file.BlockID {
 	return rp.blk
 }
 

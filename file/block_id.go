@@ -9,8 +9,8 @@ type BlockID struct {
 
 // NewBlockIDはBlockIDを返す
 // ファイル名と、ファイルのブロックNo.をもつ
-func NewBlockID(filename string, blknum int) *BlockID {
-	return &BlockID{filename, blknum}
+func NewBlockID(filename string, blknum int) BlockID {
+	return BlockID{filename, blknum}
 }
 
 func (b BlockID) FileName() string {
@@ -21,7 +21,11 @@ func (b BlockID) Number() int {
 	return b.blknum
 }
 
-func (b1 BlockID) Equals(b2 *BlockID) bool {
+func (b BlockID) IsZero() bool {
+	return b == BlockID{}
+}
+
+func (b1 BlockID) Equals(b2 BlockID) bool {
 	return b1.filename == b2.filename && b1.blknum == b2.blknum
 }
 

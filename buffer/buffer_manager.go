@@ -81,7 +81,7 @@ func (bm *BufferManager) Unpin(b *Buffer) {
 // Pin()は引数のブロックをpinする
 // pinできたらBufferを返す
 // ディスクに書き込む可能性のあるメソッドはPin()またはFlushAll()のみ
-func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
+func (bm *BufferManager) Pin(blk file.BlockID) (*Buffer, error) {
 	start := time.Now()
 	result := make(chan pinResult)
 	defer close(result)
@@ -98,7 +98,7 @@ func (bm *BufferManager) Pin(blk *file.BlockID) (*Buffer, error) {
 	}
 }
 
-func (bm *BufferManager) pin(result chan<- pinResult, blk *file.BlockID, start time.Time) {
+func (bm *BufferManager) pin(result chan<- pinResult, blk file.BlockID, start time.Time) {
 	bm.cond.L.Lock()
 	defer bm.cond.L.Unlock()
 
@@ -128,7 +128,7 @@ func (bm *BufferManager) pin(result chan<- pinResult, blk *file.BlockID, start t
 // ブロックがない場合は、unpin状態のBufferを探す
 // unpinのBufferがあれば、引数のブロックをBufferに割り当てる（ディスク書き込み）
 // Bufferがない場合はnilを返す（=> pinできなかった）
-func (bm *BufferManager) tryToPin(blk *file.BlockID) (b *Buffer, err error) {
+func (bm *BufferManager) tryToPin(blk file.BlockID) (b *Buffer, err error) {
 	b = bm.findExistingBuffer(blk)
 
 	if b == nil {
@@ -152,10 +152,10 @@ func (bm *BufferManager) tryToPin(blk *file.BlockID) (b *Buffer, err error) {
 }
 
 // findExistingBuffer()は引数と同じブロックをbufferPoolの中から探す
-func (bm *BufferManager) findExistingBuffer(blk *file.BlockID) *Buffer {
+func (bm *BufferManager) findExistingBuffer(blk file.BlockID) *Buffer {
 	for _, b := range bm.bufferPool {
 		block := b.Block()
-		if block != nil && block.Equals(blk) {
+		if block.Equals(blk) {
 			return b
 		}
 	}

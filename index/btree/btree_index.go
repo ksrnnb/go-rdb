@@ -20,7 +20,7 @@ type BTreeIndex struct {
 	dirTable   string
 	leafTable  string
 	leaf       *BTreeLeaf
-	rootBlk    *file.BlockID
+	rootBlk    file.BlockID
 }
 
 func NewBTreeIndex(tx *tx.Transaction, indexName string, leafLayout *record.Layout) (*BTreeIndex, error) {

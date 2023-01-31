@@ -17,7 +17,7 @@ type BTreeLeaf struct {
 }
 
 // NewBTreeLeaf は特定のブロックの B-tree page を作成し、searchKey の前のレコード位置に移動する
-func NewBTreeLeaf(tx *tx.Transaction, blk *file.BlockID, layout *record.Layout, searchKey query.Constant) (*BTreeLeaf, error) {
+func NewBTreeLeaf(tx *tx.Transaction, blk file.BlockID, layout *record.Layout, searchKey query.Constant) (*BTreeLeaf, error) {
 	btp, err := NewBTreePage(tx, blk, layout)
 	if err != nil {
 		return nil, err

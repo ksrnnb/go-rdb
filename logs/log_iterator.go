@@ -10,13 +10,13 @@ import (
 // 探すログレコードは末尾の方にある可能性が高いため、末尾から読む方が効率的
 type LogIterator struct {
 	fm         *file.FileManager
-	blk        *file.BlockID
+	blk        file.BlockID
 	p          *file.Page
 	currentPos int
 	boundary   int
 }
 
-func NewLogIterator(fm *file.FileManager, blk *file.BlockID) (*LogIterator, error) {
+func NewLogIterator(fm *file.FileManager, blk file.BlockID) (*LogIterator, error) {
 	b := make([]byte, fm.BlockSize())
 	p := file.NewPageWithBuf(b)
 
@@ -38,7 +38,7 @@ func NewLogIterator(fm *file.FileManager, blk *file.BlockID) (*LogIterator, erro
 // 指定したブロック領域をイテレータのページに読み込む
 // ブロック領域の先頭に入っている値をboundary（最後にログが書き込まれた場所）
 // currentPosの値をboundaryにすることで、最後にログが書き込まれた場所を指定する
-func (li *LogIterator) moveToBlock(blk *file.BlockID) error {
+func (li *LogIterator) moveToBlock(blk file.BlockID) error {
 	err := li.fm.Read(blk, li.p)
 
 	if err != nil {

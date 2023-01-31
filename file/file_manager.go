@@ -44,7 +44,7 @@ func NewFileManager(dirname string, bs int) (*FileManager, error) {
 }
 
 // 指定したブロック領域をページに読み込む
-func (fm *FileManager) Read(blk *BlockID, p *Page) error {
+func (fm *FileManager) Read(blk BlockID, p *Page) error {
 	fm.mux.Lock()
 	defer fm.mux.Unlock()
 	f, err := fm.getFile(blk.FileName())
@@ -82,7 +82,7 @@ func (fm *FileManager) Read(blk *BlockID, p *Page) error {
 }
 
 // 指定したブロック位置にページの内容を全て書き込む
-func (fm *FileManager) Write(blk *BlockID, p *Page) error {
+func (fm *FileManager) Write(blk BlockID, p *Page) error {
 	fm.mux.Lock()
 	defer fm.mux.Unlock()
 	f, err := fm.getFile(blk.FileName())
@@ -98,30 +98,30 @@ func (fm *FileManager) Write(blk *BlockID, p *Page) error {
 }
 
 // Append()は新しく空のブロックを作成して、指定したファイルに割り当てる。
-func (fm *FileManager) Append(filename string) (*BlockID, error) {
+func (fm *FileManager) Append(filename string) (BlockID, error) {
 	fm.mux.Lock()
 	defer fm.mux.Unlock()
 	newBlkNum, err := fm.Length(filename)
 	if err != nil {
-		return nil, err
+		return BlockID{}, err
 	}
 
 	blk := NewBlockID(filename, newBlkNum)
 
 	f, err := fm.getFile(filename)
 	if err != nil {
-		return nil, err
+		return BlockID{}, err
 	}
 
 	_, err = f.Seek(int64(blk.Number()*fm.blockSize), 0)
 	if err != nil {
-		return nil, err
+		return BlockID{}, err
 	}
 
 	b := make([]byte, fm.blockSize)
 	_, err = f.Write(b)
 	if err != nil {
-		return nil, err
+		return BlockID{}, err
 	}
 
 	return blk, nil

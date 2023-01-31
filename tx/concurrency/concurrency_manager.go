@@ -13,7 +13,7 @@ const (
 
 type ConcurrencyManagerLock struct {
 	ty  LockType
-	blk *file.BlockID
+	blk file.BlockID
 }
 
 type ConcurrencyManager struct {
@@ -25,7 +25,7 @@ func NewConcurrencyManager(lt *LockTable) *ConcurrencyManager {
 	return &ConcurrencyManager{lt: lt}
 }
 
-func (cm *ConcurrencyManager) SLock(blk *file.BlockID) error {
+func (cm *ConcurrencyManager) SLock(blk file.BlockID) error {
 	// ConcurrencyManager が sLock または xLock を所持している場合は、同じトランザクションなのでそのまま読み込みできる
 	if cm.getConcurrencyManagerLock(blk) != nil {
 		return nil
@@ -40,7 +40,7 @@ func (cm *ConcurrencyManager) SLock(blk *file.BlockID) error {
 	return nil
 }
 
-func (cm *ConcurrencyManager) XLock(blk *file.BlockID) error {
+func (cm *ConcurrencyManager) XLock(blk file.BlockID) error {
 	// ConcurrencyManager が xLock を所持している場合は、同じトランザクションなのでそのまま書き込みできる
 	if cm.hasXLock(blk) {
 		return nil
@@ -63,7 +63,7 @@ func (cm *ConcurrencyManager) Release() {
 	cm.locks = nil
 }
 
-func (cm *ConcurrencyManager) hasXLock(blk *file.BlockID) bool {
+func (cm *ConcurrencyManager) hasXLock(blk file.BlockID) bool {
 	lock := cm.getConcurrencyManagerLock(blk)
 
 	if lock == nil {
@@ -73,7 +73,7 @@ func (cm *ConcurrencyManager) hasXLock(blk *file.BlockID) bool {
 	return lock.ty == XLockType
 }
 
-func (cm *ConcurrencyManager) getConcurrencyManagerLock(blk *file.BlockID) *ConcurrencyManagerLock {
+func (cm *ConcurrencyManager) getConcurrencyManagerLock(blk file.BlockID) *ConcurrencyManagerLock {
 	for _, lock := range cm.locks {
 		if blk.Equals(lock.blk) {
 			return lock
@@ -83,7 +83,7 @@ func (cm *ConcurrencyManager) getConcurrencyManagerLock(blk *file.BlockID) *Conc
 	return nil
 }
 
-func (cm *ConcurrencyManager) setConcurrencyManagerLock(blk *file.BlockID, ty LockType) {
+func (cm *ConcurrencyManager) setConcurrencyManagerLock(blk file.BlockID, ty LockType) {
 	for i, lock := range cm.locks {
 		if blk.Equals(lock.blk) {
 			lock.ty = ty

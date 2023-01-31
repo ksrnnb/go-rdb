@@ -14,7 +14,7 @@ type BTreeDirectory struct {
 	fileName string
 }
 
-func NewBTreeDirectory(tx *tx.Transaction, blk *file.BlockID, layout *record.Layout) (*BTreeDirectory, error) {
+func NewBTreeDirectory(tx *tx.Transaction, blk file.BlockID, layout *record.Layout) (*BTreeDirectory, error) {
 	btp, err := NewBTreePage(tx, blk, layout)
 	if err != nil {
 		return nil, err
@@ -164,21 +164,21 @@ func (btd *BTreeDirectory) insertEntry(de DirectoryEntry) (DirectoryEntry, error
 	return NewDirectoryEntry(splitVal, newBlk.Number()), nil
 }
 
-func (btd *BTreeDirectory) findChildBlock(searchKey query.Constant) (*file.BlockID, error) {
+func (btd *BTreeDirectory) findChildBlock(searchKey query.Constant) (file.BlockID, error) {
 	slot, err := btd.contents.FindSlotBefore(searchKey)
 	if err != nil {
-		return nil, err
+		return file.BlockID{}, err
 	}
 	v, err := btd.contents.GetDataValue(slot + 1)
 	if err != nil {
-		return nil, err
+		return file.BlockID{}, err
 	}
 	if v.Equals(searchKey) {
 		slot++
 	}
 	blkNum, err := btd.contents.getChildNum(slot)
 	if err != nil {
-		return nil, err
+		return file.BlockID{}, err
 	}
 	return file.NewBlockID(btd.fileName, blkNum), nil
 }

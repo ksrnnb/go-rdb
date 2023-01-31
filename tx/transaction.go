@@ -66,15 +66,15 @@ func (tx *Transaction) Recover() error {
 	return tx.rm.Recover()
 }
 
-func (tx *Transaction) Pin(blk *file.BlockID) error {
+func (tx *Transaction) Pin(blk file.BlockID) error {
 	return tx.bl.pin(blk)
 }
 
-func (tx *Transaction) Unpin(blk *file.BlockID) error {
+func (tx *Transaction) Unpin(blk file.BlockID) error {
 	return tx.bl.unpin(blk)
 }
 
-func (tx *Transaction) GetInt(blk *file.BlockID, offset int) (int, error) {
+func (tx *Transaction) GetInt(blk file.BlockID, offset int) (int, error) {
 	err := tx.cm.SLock(blk)
 	if err != nil {
 		return 0, err
@@ -95,7 +95,7 @@ func (tx *Transaction) GetInt(blk *file.BlockID, offset int) (int, error) {
 	return val, nil
 }
 
-func (tx *Transaction) SetInt(blk *file.BlockID, offset int, val int, okToLog bool) error {
+func (tx *Transaction) SetInt(blk file.BlockID, offset int, val int, okToLog bool) error {
 	err := tx.cm.XLock(blk)
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func (tx *Transaction) SetInt(blk *file.BlockID, offset int, val int, okToLog bo
 	return nil
 }
 
-func (tx *Transaction) GetString(blk *file.BlockID, offset int) (string, error) {
+func (tx *Transaction) GetString(blk file.BlockID, offset int) (string, error) {
 	err := tx.cm.SLock(blk)
 	if err != nil {
 		return "", err
@@ -143,7 +143,7 @@ func (tx *Transaction) GetString(blk *file.BlockID, offset int) (string, error) 
 	return val, nil
 }
 
-func (tx *Transaction) SetString(blk *file.BlockID, offset int, val string, okToLog bool) error {
+func (tx *Transaction) SetString(blk file.BlockID, offset int, val string, okToLog bool) error {
 	err := tx.cm.XLock(blk)
 	if err != nil {
 		return err
@@ -181,11 +181,11 @@ func (tx *Transaction) Size(filename string) (int, error) {
 	return tx.fm.Length(filename)
 }
 
-func (tx *Transaction) Append(filename string) (*file.BlockID, error) {
+func (tx *Transaction) Append(filename string) (file.BlockID, error) {
 	blk := file.NewBlockID(filename, endOfFile)
 	err := tx.cm.XLock(blk)
 	if err != nil {
-		return nil, err
+		return file.BlockID{}, err
 	}
 
 	return tx.fm.Append(filename)

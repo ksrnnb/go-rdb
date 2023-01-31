@@ -37,11 +37,11 @@ func (pf PageFlag) HasOverflow() bool {
 // TODO： directory と leaf で page 構造体を分けた方がいいかも？
 type BTreePage struct {
 	tx         *tx.Transaction
-	currentBlk *file.BlockID
+	currentBlk file.BlockID
 	layout     *record.Layout
 }
 
-func NewBTreePage(tx *tx.Transaction, currentBlk *file.BlockID, layout *record.Layout) (*BTreePage, error) {
+func NewBTreePage(tx *tx.Transaction, currentBlk file.BlockID, layout *record.Layout) (*BTreePage, error) {
 	err := tx.Pin(currentBlk)
 	if err != nil {
 		return nil, err
@@ -78,14 +78,14 @@ func (btp *BTreePage) FindSlotBefore(searchKey query.Constant) (slot int, err er
 }
 
 func (btp *BTreePage) Close() error {
-	if btp.currentBlk == nil {
+	if btp.currentBlk.IsZero() {
 		return nil
 	}
 	err := btp.tx.Unpin(btp.currentBlk)
 	if err != nil {
 		return err
 	}
-	btp.currentBlk = nil
+	btp.currentBlk = file.BlockID{}
 	return nil
 }
 
@@ -100,26 +100,26 @@ func (btp *BTreePage) IsFull() (bool, error) {
 
 // Split は新しくブロックを作成し、splitPos 以降のデータを新しい page に移す
 // 処理に成功した場合は、新しく作成したブロックを返す
-func (btp *BTreePage) Split(splitPos int, flag PageFlag) (*file.BlockID, error) {
+func (btp *BTreePage) Split(splitPos int, flag PageFlag) (file.BlockID, error) {
 	newBlk, err := btp.AppendNew(flag)
 	if err != nil {
-		return nil, err
+		return file.BlockID{}, err
 	}
 	newPage, err := NewBTreePage(btp.tx, newBlk, btp.layout)
 	if err != nil {
-		return nil, err
+		return file.BlockID{}, err
 	}
 	err = btp.transferRecords(splitPos, newPage)
 	if err != nil {
-		return nil, err
+		return file.BlockID{}, err
 	}
 	err = newPage.SetFlag(flag)
 	if err != nil {
-		return nil, err
+		return file.BlockID{}, err
 	}
 	err = newPage.Close()
 	if err != nil {
-		return nil, err
+		return file.BlockID{}, err
 	}
 	return newBlk, err
 }
@@ -141,20 +141,20 @@ func (btp *BTreePage) SetFlag(flag PageFlag) error {
 }
 
 // AppendNew はファイルに新しいブロックを作成し、フォーマットして返す
-func (btp *BTreePage) AppendNew(flag PageFlag) (*file.BlockID, error) {
+func (btp *BTreePage) AppendNew(flag PageFlag) (file.BlockID, error) {
 	blk, err := btp.tx.Append(btp.currentBlk.FileName())
 	if err != nil {
-		return nil, err
+		return file.BlockID{}, err
 	}
 	err = btp.tx.Pin(blk)
 	if err != nil {
-		return nil, err
+		return file.BlockID{}, err
 	}
 	btp.Format(blk, flag)
 	return blk, nil
 }
 
-func (btp *BTreePage) Format(blk *file.BlockID, flag PageFlag) error {
+func (btp *BTreePage) Format(blk file.BlockID, flag PageFlag) error {
 	err := btp.tx.SetInt(blk, flagPos, flag.AsInt(), false)
 	if err != nil {
 		return err
@@ -174,7 +174,7 @@ func (btp *BTreePage) Format(blk *file.BlockID, flag PageFlag) error {
 }
 
 // makeDefaultDecord は指定した位置にゼロ値を設定する
-func (btp *BTreePage) makeDefaultDecord(blk *file.BlockID, pos int) error {
+func (btp *BTreePage) makeDefaultDecord(blk file.BlockID, pos int) error {
 	for _, fn := range btp.layout.Schema().Fields() {
 		offset, err := btp.layout.Offset(fn)
 		if err != nil {

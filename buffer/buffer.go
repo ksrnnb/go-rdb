@@ -11,7 +11,7 @@ type Buffer struct {
 	fm       *file.FileManager
 	lm       *logs.LogManager
 	contents *file.Page
-	blk      *file.BlockID
+	blk      file.BlockID
 	pins     int // ページがピン留めされた回数
 	txnum    int // ページの変更を行なったトランザクションを識別する。-1 は未変更
 	lsn      int // 最新のログレコードの Log Sequence Number
@@ -37,7 +37,7 @@ func (b *Buffer) Contents() *file.Page {
 }
 
 // バッファがもつブロックを返す
-func (b *Buffer) Block() *file.BlockID {
+func (b *Buffer) Block() file.BlockID {
 	return b.blk
 }
 
@@ -63,7 +63,7 @@ func (b *Buffer) ModifyingTx() int {
 
 // 指定したブロックの内容をBufferのpageに割り当てる
 // 割り当て前に、バッファの内容はflush()してディスクに書き込まれる
-func (b *Buffer) assignToBlock(blk *file.BlockID) error {
+func (b *Buffer) assignToBlock(blk file.BlockID) error {
 	err := b.flush()
 
 	if err != nil {

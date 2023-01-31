@@ -28,7 +28,7 @@ type LogManager struct {
 	fm           *file.FileManager
 	logFileName  string
 	logPage      *file.Page
-	currentBlk   *file.BlockID
+	currentBlk   file.BlockID
 	latestLSN    int // LSN: Log Sequence Number
 	lastSavedLSN int
 	mux          sync.Mutex
@@ -153,23 +153,23 @@ func (lm *LogManager) Append(logrec []byte) (latestLSN int, err error) {
 // appendNewBlock()はログファイルに新しくブロックを割り当てて、
 // ログページの先頭に新しく割り当てたブロックのサイズを格納する。
 // 生成したブロックにページの内容を書き込んだあと、そのブロックを返す。
-func (lm *LogManager) appendNewBlock() (*file.BlockID, error) {
+func (lm *LogManager) appendNewBlock() (file.BlockID, error) {
 	blk, err := lm.fm.Append(lm.logFileName)
 
 	if err != nil {
-		return nil, fmt.Errorf("log: appendNewBlock() cannot append new block, %w", err)
+		return file.BlockID{}, fmt.Errorf("log: appendNewBlock() cannot append new block, %w", err)
 	}
 
 	// boundary を末尾に設定
 	err = lm.setBoundary(lm.fm.BlockSize())
 	if err != nil {
-		return nil, fmt.Errorf("log: appendNewBlock() cannot set integer to lm.logPage, %w", err)
+		return file.BlockID{}, fmt.Errorf("log: appendNewBlock() cannot set integer to lm.logPage, %w", err)
 	}
 
 	err = lm.fm.Write(blk, lm.logPage)
 
 	if err != nil {
-		return nil, fmt.Errorf("log: appendNewBlock() cannot write to lm.logPage, %w", err)
+		return file.BlockID{}, fmt.Errorf("log: appendNewBlock() cannot write to lm.logPage, %w", err)
 	}
 
 	return blk, nil
