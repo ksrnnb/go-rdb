@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	tableCategoryTableName = "table_categories"
-	fieldCategoryTableName = "field_categories"
+	tableCatalogTableName = "table_catalogs"
+	fieldCatalogTableName = "field_catalogs"
 )
 
 const (
@@ -33,9 +33,9 @@ func TestCatalog(t *testing.T) {
 	tm, err := metadata.NewTableManager(true, tx)
 	require.NoError(t, err)
 
-	layout, err := tm.Layout(tableCategoryTableName, tx)
+	layout, err := tm.Layout(tableCatalogTableName, tx)
 	require.NoError(t, err)
-	ts, err := query.NewTableScan(tx, tableCategoryTableName, layout)
+	ts, err := query.NewTableScan(tx, tableCatalogTableName, layout)
 	require.NoError(t, err)
 
 	hasNext, err := ts.Next()
@@ -54,9 +54,9 @@ func TestCatalog(t *testing.T) {
 	err = ts.Close()
 	require.NoError(t, err)
 
-	flayout, err := tm.Layout(fieldCategoryTableName, tx)
+	flayout, err := tm.Layout(fieldCatalogTableName, tx)
 	require.NoError(t, err)
-	fts, err := query.NewTableScan(tx, fieldCategoryTableName, flayout)
+	fts, err := query.NewTableScan(tx, fieldCatalogTableName, flayout)
 	require.NoError(t, err)
 
 	hasNext, err = fts.Next()

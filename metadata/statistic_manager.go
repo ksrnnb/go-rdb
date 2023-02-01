@@ -77,12 +77,12 @@ func (sm *StatisticManager) refreshStatistics(tx *tx.Transaction) error {
 	sm.tableStats = make(map[string]StatInfo)
 	sm.numCalls = 0
 
-	tcatLayout, err := sm.tm.Layout(tableCategoryTableName, tx)
+	tcatLayout, err := sm.tm.Layout(tableCatalogTableName, tx)
 	if err != nil {
 		return err
 	}
 
-	ts, err := query.NewTableScan(tx, tableCategoryTableName, tcatLayout)
+	ts, err := query.NewTableScan(tx, tableCatalogTableName, tcatLayout)
 	if err != nil {
 		return err
 	}

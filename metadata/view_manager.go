@@ -7,7 +7,7 @@ import (
 )
 
 // -------------------------------
-// |      view_categories        |
+// |        view_catalogs        |
 // -------------------------------
 // | view_name       varchar(16) |
 // | view_definition varchar(16) |
@@ -16,7 +16,7 @@ import (
 
 const MaxViewDefinitionLength = 100
 
-const viewCategoryTableName = "view_categories"
+const viewCatalogTableName = "view_catalogs"
 
 const (
 	viewNameField       = "view_name"
@@ -33,7 +33,7 @@ func NewViewManager(isNew bool, tm *TableManager, tx *tx.Transaction) (*ViewMana
 		schema := record.NewSchema()
 		schema.AddStringField(viewNameField, MaxFieldNameLength)
 		schema.AddStringField(viewDefinitionField, MaxFieldNameLength)
-		err := vm.tm.CreateTable(viewCategoryTableName, schema, tx)
+		err := vm.tm.CreateTable(viewCatalogTableName, schema, tx)
 		if err != nil {
 			return nil, err
 		}
@@ -42,11 +42,11 @@ func NewViewManager(isNew bool, tm *TableManager, tx *tx.Transaction) (*ViewMana
 }
 
 func (vm *ViewManager) CreateView(viewName string, definition string, tx *tx.Transaction) error {
-	layout, err := vm.tm.Layout(viewCategoryTableName, tx)
+	layout, err := vm.tm.Layout(viewCatalogTableName, tx)
 	if err != nil {
 		return err
 	}
-	ts, err := query.NewTableScan(tx, viewCategoryTableName, layout)
+	ts, err := query.NewTableScan(tx, viewCatalogTableName, layout)
 	if err != nil {
 		return err
 	}
@@ -67,12 +67,12 @@ func (vm *ViewManager) CreateView(viewName string, definition string, tx *tx.Tra
 
 func (vm *ViewManager) Definition(viewName string, tx *tx.Transaction) (string, error) {
 	definition := ""
-	layout, err := vm.tm.Layout(viewCategoryTableName, tx)
+	layout, err := vm.tm.Layout(viewCatalogTableName, tx)
 	if err != nil {
 		return "", err
 	}
 
-	ts, err := query.NewTableScan(tx, viewCategoryTableName, layout)
+	ts, err := query.NewTableScan(tx, viewCatalogTableName, layout)
 	if err != nil {
 		return "", err
 	}

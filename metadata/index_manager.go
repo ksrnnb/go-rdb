@@ -8,7 +8,7 @@ import (
 )
 
 // --------------------------
-// |    index_categories    |
+// |     index_catalogs     |
 // --------------------------
 // | index_name varchar(16) |
 // | table_name varchar(16) |
@@ -16,7 +16,7 @@ import (
 // --------------------------
 
 const (
-	indexCategoryTableName = "index_categories"
+	indexCatalogTableName = "index_catalogs"
 )
 const (
 	indexNameField = "index_name"
@@ -101,21 +101,21 @@ func NewIndexManager(isNew bool, tm *TableManager, sm *StatisticManager, tx *tx.
 		schema.AddStringField(indexNameField, MaxFieldNameLength)
 		schema.AddStringField(tableNameField, MaxFieldNameLength)
 		schema.AddStringField(fieldNameField, MaxFieldNameLength)
-		err := tm.CreateTable(indexCategoryTableName, schema, tx)
+		err := tm.CreateTable(indexCatalogTableName, schema, tx)
 		if err != nil {
 			return nil, err
 		}
 	}
-	layout, err := tm.Layout(indexCategoryTableName, tx)
+	layout, err := tm.Layout(indexCatalogTableName, tx)
 	if err != nil {
 		return nil, err
 	}
 	return &IndexManager{layout, tm, sm}, nil
 }
 
-// CreateIndex は indexCategoryTableName テーブルにインデックスのレコードを追加する
+// CreateIndex は indexCatalogTableName テーブルにインデックスのレコードを追加する
 func (im *IndexManager) CreateIndex(indexName string, tableName string, fieldName string, tx *tx.Transaction) error {
-	ts, err := query.NewTableScan(tx, indexCategoryTableName, im.layout)
+	ts, err := query.NewTableScan(tx, indexCatalogTableName, im.layout)
 	if err != nil {
 		return err
 	}
@@ -140,10 +140,10 @@ func (im *IndexManager) CreateIndex(indexName string, tableName string, fieldNam
 	return ts.Close()
 }
 
-// IndexInfo は indexCategoryTableName をスキャンして、指定したテーブルのインデックス情報を取得する
+// IndexInfo は indexCatalogTableName をスキャンして、指定したテーブルのインデックス情報を取得する
 func (im *IndexManager) IndexInfo(tableName string, tx *tx.Transaction) (map[string]*IndexInfo, error) {
 	iis := make(map[string]*IndexInfo)
-	ts, err := query.NewTableScan(tx, indexCategoryTableName, im.layout)
+	ts, err := query.NewTableScan(tx, indexCatalogTableName, im.layout)
 	if err != nil {
 		return nil, err
 	}

@@ -9,14 +9,14 @@ import (
 )
 
 // --------------------------
-// |    table_categories    |
+// |     table_catalogs     |
 // --------------------------
 // | table_name varchar(16) |
 // | slot_size  int         |
 // --------------------------
 
 // --------------------------
-// |    field_categories    |
+// |     field_catalogs     |
 // --------------------------
 // | table_name varchar(16) |
 // | field_name varchar(16) |
@@ -31,8 +31,8 @@ const (
 )
 
 const (
-	tableCategoryTableName = "table_categories"
-	fieldCategoryTableName = "field_categories"
+	tableCatalogTableName = "table_catalogs"
+	fieldCatalogTableName = "field_catalogs"
 )
 
 const (
@@ -65,12 +65,12 @@ func NewTableManager(isNew bool, tx *tx.Transaction) (*TableManager, error) {
 
 	tm := &TableManager{tcatLayout, fcatLayout}
 	if isNew {
-		err := tm.CreateTable(tableCategoryTableName, tcatSchema, tx)
+		err := tm.CreateTable(tableCatalogTableName, tcatSchema, tx)
 		if err != nil {
 			return nil, err
 		}
 
-		err = tm.CreateTable(fieldCategoryTableName, fcatSchema, tx)
+		err = tm.CreateTable(fieldCatalogTableName, fcatSchema, tx)
 		if err != nil {
 			return nil, err
 		}
@@ -80,15 +80,15 @@ func NewTableManager(isNew bool, tx *tx.Transaction) (*TableManager, error) {
 
 func (tm *TableManager) CreateTable(tableName string, schema *record.Schema, tx *tx.Transaction) error {
 	layout := record.NewLayout(schema)
-	err := tm.createTableCategoryTable(tableName, tx, layout)
+	err := tm.createTableCatalogTable(tableName, tx, layout)
 	if err != nil {
 		return err
 	}
-	return tm.createFieldCategoryTable(tableName, schema, tx, layout)
+	return tm.createFieldCatalogTable(tableName, schema, tx, layout)
 }
 
-func (tm *TableManager) createTableCategoryTable(tableName string, tx *tx.Transaction, layout *record.Layout) error {
-	tcatTs, err := query.NewTableScan(tx, tableCategoryTableName, tm.tcatLayout)
+func (tm *TableManager) createTableCatalogTable(tableName string, tx *tx.Transaction, layout *record.Layout) error {
+	tcatTs, err := query.NewTableScan(tx, tableCatalogTableName, tm.tcatLayout)
 	if err != nil {
 		return err
 	}
@@ -111,8 +111,8 @@ func (tm *TableManager) createTableCategoryTable(tableName string, tx *tx.Transa
 	return tcatTs.Close()
 }
 
-func (tm *TableManager) createFieldCategoryTable(tableName string, schema *record.Schema, tx *tx.Transaction, layout *record.Layout) error {
-	fcatTs, err := query.NewTableScan(tx, fieldCategoryTableName, tm.fcatLayout)
+func (tm *TableManager) createFieldCatalogTable(tableName string, schema *record.Schema, tx *tx.Transaction, layout *record.Layout) error {
+	fcatTs, err := query.NewTableScan(tx, fieldCatalogTableName, tm.fcatLayout)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func (tm *TableManager) createFieldCategoryTable(tableName string, schema *recor
 
 func (tm *TableManager) Layout(tableName string, tx *tx.Transaction) (*record.Layout, error) {
 	size := -1
-	tcatTs, err := query.NewTableScan(tx, tableCategoryTableName, tm.tcatLayout)
+	tcatTs, err := query.NewTableScan(tx, tableCatalogTableName, tm.tcatLayout)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (tm *TableManager) Layout(tableName string, tx *tx.Transaction) (*record.La
 	schema := record.NewSchema()
 	offsets := make(map[string]int)
 
-	fcatTs, err := query.NewTableScan(tx, fieldCategoryTableName, tm.fcatLayout)
+	fcatTs, err := query.NewTableScan(tx, fieldCatalogTableName, tm.fcatLayout)
 	if err != nil {
 		return nil, err
 	}
