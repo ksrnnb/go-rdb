@@ -32,10 +32,6 @@ func (ls LockStatus) SLock() LockStatus {
 	return ls + 1
 }
 
-func (ls LockStatus) IsSLocked() bool {
-	return ls > 1
-}
-
 type LockTable struct {
 	cond  *sync.Cond
 	locks map[file.BlockID]LockStatus
@@ -140,7 +136,7 @@ func (lt *LockTable) hasXLock(blk file.BlockID) bool {
 
 // hasOtherSLocks は、他の concurrency manager も slock しているかどうかを返す
 func (lt *LockTable) hasOtherSLocks(blk file.BlockID) bool {
-	return lt.getLockStatus(blk).IsSLocked()
+	return lt.getLockStatus(blk) > 1
 }
 
 func (lt *LockTable) getLockStatus(blk file.BlockID) LockStatus {
