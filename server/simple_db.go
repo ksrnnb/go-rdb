@@ -23,7 +23,7 @@ type SimpleDB struct {
 	tng *tx.TransactionNumberGenerator
 }
 
-const defaultBlockSize = 400
+const defaultBlockSize = 800
 const defaultBufferSize = 8
 
 const logFile = "simpledb.log"
