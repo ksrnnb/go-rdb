@@ -64,8 +64,7 @@ func NewSimpleDBWithMetadata(dirname string) *SimpleDB {
 		fmt.Println("creating new database...")
 	} else {
 		fmt.Println("recovering existing database...")
-		// TODO: fix recover
-		// err := tx.Recover()
+		err := tx.Recover()
 		if err != nil {
 			log.Fatalf("Recover() failed, %v", err)
 		}

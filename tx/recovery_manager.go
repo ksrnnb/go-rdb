@@ -172,7 +172,7 @@ func (rm *RecoveryManager) doRecover() error {
 
 		if rec.Op() == Commit || rec.Op() == Rollback {
 			finishedTxs = append(finishedTxs, rec.TxNumber())
-		} else if contains(finishedTxs, rec.TxNumber()) {
+		} else if !contains(finishedTxs, rec.TxNumber()) {
 			rec.Undo(rm.tx)
 		}
 	}
